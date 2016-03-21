@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y g++ \
                 python-pandas
 
 ENV BINPATH /usr/bin
-ENV EVOOGIT https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
+ENV EVOGIT https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
 
-RUN git clone $EVOOGIT
+RUN git clone $EVOGIT
 WORKDIR /evolinc_docker
 RUN chmod +x evolinc-part-I.sh && cp evolinc-part-I.sh $BINPATH
 
@@ -62,3 +62,4 @@ CMD ["-h"]
 # mkdir /workind-dir
 # sudo git clone https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
 # docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff 
+# docker tag ubuntu/evolinc:0.2 upendradevisetty/evolinc:0.2
