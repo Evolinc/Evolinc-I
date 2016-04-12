@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y g++ \
                 python-pandas
 
 ENV BINPATH /usr/bin
-ENV EVOGIT https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
+ENV EVOGINC https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
 
-RUN git clone $EVOGIT
+RUN git clone $EVOGINC
 WORKDIR /evolinc_docker
 RUN chmod +x evolinc-part-I.sh && cp evolinc-part-I.sh $BINPATH
 
