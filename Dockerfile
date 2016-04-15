@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y g++ \
                 python-pandas
 
 ENV BINPATH /usr/bin
-ENV EVOGINC https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
+ENV EVOLINC1 https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
 
-RUN git clone $EVOGINC
+RUN git clone $EVOLINC1
 WORKDIR /evolinc_docker
 RUN chmod +x evolinc-part-I.sh && cp evolinc-part-I.sh $BINPATH
 
@@ -27,7 +27,7 @@ RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz |
 RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.3.0+-x64-linux.tar.gz > ncbi-blast-2.3.0+-x64-linux.tar.gz
 RUN tar xvf ncbi-blast-2.3.0+-x64-linux.tar.gz
 # Quast
-RUN wget -O- http://ftp.mirrorservice.org/sites/download.sourceforge.net/pub/sourceforge/q/qu/quast/quast-3.0.tar.gz | tar zxvf -
+RUN wget -O- https://sourceforge.net/projects/quast/files/latest/download | tar zxvf -
 # Samtools
 RUN wget --no-check-certificate http://sourceforge.net/projects/samtools/files/samtools/1.0/samtools-bcftools-htslib-1.0_x64-linux.tar.bz2/download
 RUN tar xvf download
