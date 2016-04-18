@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y g++ \
 		git \
 		zlib1g-dev \
 		python \
+		perl \
 		wget \
 		curl \
 		python-matplotlib \
@@ -13,9 +14,9 @@ RUN apt-get update && apt-get install -y g++ \
                 python-pandas
 
 ENV BINPATH /usr/bin
-ENV EVOLINC1 https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
+ENV EVOLINCI https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
 
-RUN git clone $EVOLINC1
+RUN git clone $EVOLINCI
 WORKDIR /evolinc_docker
 RUN chmod +x evolinc-part-I.sh && cp evolinc-part-I.sh $BINPATH
 
@@ -51,8 +52,9 @@ ENV PATH /evolinc_docker/ncbi-blast-2.3.0+/bin/:$PATH
 ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/samtools-bcftools-htslib-1.0_x64-linux/bin/:$PATH
 ENV PATH /evolinc_docker/bwa-0.7.12/:$PATH
+ENV PATH /evolinc_docker/quast-3.2/:$PATH
 
-ENTRYPOINT ["/usr/bin/evolinc-part-I.sh"]
+ENTRYPOINT ["evolinc-part-I.sh"]
 CMD ["-h"]
 
 # Docker build
