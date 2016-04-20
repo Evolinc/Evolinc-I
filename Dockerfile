@@ -28,7 +28,7 @@ RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz |
 RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.3.0+-x64-linux.tar.gz > ncbi-blast-2.3.0+-x64-linux.tar.gz
 RUN tar xvf ncbi-blast-2.3.0+-x64-linux.tar.gz
 # Quast
-RUN wget -O- https://sourceforge.net/projects/quast/files/latest/download | tar zxvf -
+RUN wget -O- https://sourceforge.net/projects/quast/files/quast-3.2.tar.gz/download | tar zxvf -
 # Samtools
 RUN wget --no-check-certificate http://sourceforge.net/projects/samtools/files/samtools/1.0/samtools-bcftools-htslib-1.0_x64-linux.tar.bz2/download
 RUN tar xvf download
