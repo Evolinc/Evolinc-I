@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y g++ \
 		curl \
 		python-matplotlib \
 		python-numpy \
-                python-pandas
+        python-pandas
 
 ENV BINPATH /usr/bin
 ENV EVOLINCI https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
@@ -28,7 +28,7 @@ RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz |
 RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.3.0+-x64-linux.tar.gz > ncbi-blast-2.3.0+-x64-linux.tar.gz
 RUN tar xvf ncbi-blast-2.3.0+-x64-linux.tar.gz
 # Quast
-RUN wget -O- https://sourceforge.net/projects/quast/files/quast-3.2.tar.gz/download | tar zxvf -
+RUN wget -O- https://downloads.sourceforge.net/project/quast/quast-4.0.tar.gz | tar zxvf -
 # Samtools
 RUN wget --no-check-certificate http://sourceforge.net/projects/samtools/files/samtools/1.0/samtools-bcftools-htslib-1.0_x64-linux.tar.bz2/download
 RUN tar xvf download
@@ -45,6 +45,7 @@ RUN cd ..
 # cpan
 RUN curl -L http://cpanmin.us | perl - App::cpanminus
 RUN cpanm URI/Escape.pm
+RUN 
 
 ENV PATH /evolinc_docker/cufflinks-2.2.1.Linux_x86_64/:$PATH
 ENV PATH /evolinc_docker/TransDecoder-2.0.1/:$PATH
@@ -52,7 +53,7 @@ ENV PATH /evolinc_docker/ncbi-blast-2.3.0+/bin/:$PATH
 ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/samtools-bcftools-htslib-1.0_x64-linux/bin/:$PATH
 ENV PATH /evolinc_docker/bwa-0.7.12/:$PATH
-ENV PATH /evolinc_docker/quast-3.2/:$PATH
+ENV PATH /evolinc_docker/quast-4.0/:$PATH
 
 ENTRYPOINT ["evolinc-part-I.sh"]
 CMD ["-h"]
