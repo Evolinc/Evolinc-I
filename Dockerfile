@@ -50,6 +50,18 @@ RUN cpanm URI/Escape.pm
 ADD *.sh *.py *.pl /evolinc_docker/
 RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
 
+# R libraries
+RUN echo "deb http://cran.cnr.berkeley.edu/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
+RUN apt-get update
+RUN apt-get install -y r-base r-base-dev
+RUN Rscript -e 'install.packages("splitstackshape", dependencies = TRUE, repos="http://cran.rstudio.com/");'
+RUN Rscript -e 'install.packages("dplyr", dependencies = TRUE, repos="http://cran.rstudio.com/");'
+RUN Rscript -e 'source("https://bioconductor.org/biocLite.R"); biocLite("Biostrings");'
+
+# R scripts
+ADD *.R /evolinc_docker/
+
 # Setting paths to all the softwares
 ENV PATH /evolinc_docker/cufflinks-2.2.1.Linux_x86_64/:$PATH
 ENV PATH /evolinc_docker/TransDecoder-2.0.1/:$PATH
@@ -71,3 +83,5 @@ CMD ["-h"]
 # sudo git clone https://upendra_35@bitbucket.org/upendra_35/evolinc_docker.git
 # docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff 
 # docker tag ubuntu/evolinc:0.2 upendradevisetty/evolinc:0.2
+# sudo docker build -t="ubuntu/evolinc-i:0.4" .
+#docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff 
