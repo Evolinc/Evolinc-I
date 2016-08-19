@@ -119,7 +119,7 @@ blastp -query longest_orfs_cat.pep -db /uniprot_sprot.fa -max_target_seqs 1 -out
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
 
-sed 's/|.*//' longest_orfs_cat.pep.blastp | sed -ne 's/>//p' | uniq > longest_orfs_cat.pep.blastp.genes
+cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 > longest_orfs_cat.pep.blastp.genes
 
 cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes > longest_orfs_cat.cds.pep.blastp.genes
 
@@ -317,7 +317,7 @@ echo "Elapsed time for Optional Step 2 is" $ELAPSED_TIME_O2 "seconds" >> ../$out
 # Pie chart if both CAGE and Knownlinc are given
 if [ ! -z $cagefile ] && [ ! -z $knownlinc ] ; then
    python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
-   Rscript /final_summary_table_gen_evo-I.R
+   Rscript /evolinc_docker/final_summary_table_gen_evo-I.R
    cp lincRNA_piechart.png ../$output
 fi
 
