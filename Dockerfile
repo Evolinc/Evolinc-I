@@ -46,10 +46,6 @@ RUN wget -O- https://github.com/bedops/bedops/releases/download/v2.4.16/bedops_l
 RUN curl -L http://cpanmin.us | perl - App::cpanminus
 RUN cpanm URI/Escape.pm
 
-# Evolinc wrapper scripts
-ADD *.sh *.py *.pl /evolinc_docker/
-RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
-
 # R libraries
 RUN echo "deb http://cran.cnr.berkeley.edu/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
@@ -59,8 +55,14 @@ RUN Rscript -e 'install.packages("splitstackshape", dependencies = TRUE, repos="
 RUN Rscript -e 'install.packages("dplyr", dependencies = TRUE, repos="http://cran.rstudio.com/");'
 RUN Rscript -e 'source("https://bioconductor.org/biocLite.R"); biocLite("Biostrings");'
 
-# R scripts
-ADD *.R /evolinc_docker/
+# Evolinc wrapper scripts
+ADD *.sh *.py *.pl *.R /evolinc_docker/
+RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
+
+# Uniprot database
+RUN apt-get install -y gzip
+ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.fa.gz /
+RUN gzip -d /uniprot_sprot.fa.gz
 
 # Setting paths to all the softwares
 ENV PATH /evolinc_docker/cufflinks-2.2.1.Linux_x86_64/:$PATH
@@ -84,4 +86,5 @@ CMD ["-h"]
 # docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff 
 # docker tag ubuntu/evolinc:0.2 upendradevisetty/evolinc:0.2
 # sudo docker build -t="ubuntu/evolinc-i:0.4" .
-#docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff 
+#docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff
+# sudo docker run --rm -v /home/upendra_35/dockerfile-evolinc/sample.data.arabi:/result -v /home/upendra_35/dockerfile-evolinc/sample.data.arabi/uniprot_sprot.fa:/uniprot_sprot.fa -w /result ubuntu/evolinc:0.4 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -o test_out2 -b TE_RNA_transcripts.fa -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff
