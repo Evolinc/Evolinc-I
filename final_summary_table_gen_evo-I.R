@@ -56,5 +56,5 @@ merge3 <- merge(x = merge2, y = bedfinal, by = 1, all = TRUE)
 colnames(merge3)[5] <- "Number_of_exons"
 
 # Writing data
-write.table(merge3, file = "Final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
+write.table(merge3, file = "/Final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
 

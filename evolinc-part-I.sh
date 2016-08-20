@@ -318,6 +318,7 @@ echo "Elapsed time for Optional Step 2 is" $ELAPSED_TIME_O2 "seconds" >> ../$out
 if [ ! -z $cagefile ] && [ ! -z $knownlinc ] ; then
    python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
    Rscript /evolinc_docker/final_summary_table_gen_evo-I.R
+   mv /Final_Summary_table_evolinc-I.tsv ../$output
    cp lincRNA_piechart.png ../$output
 fi
 
