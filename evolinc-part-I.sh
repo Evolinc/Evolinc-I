@@ -6,10 +6,11 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -c cuffcompare -g genome -r gff -o output [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
+      echo "Usage : sh $0 -c cuffcompare -g genome -r gff -o output -threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
       echo ""
 
 cat <<'EOF'
+
   -c </path/to/cuffcompare output file>
 
   -g </path/to/reference genome file>
@@ -17,6 +18,8 @@ cat <<'EOF'
   -r </path/to/reference annotation file>
 
   -b </path/to/Transposable Elements file>
+
+  -n <number of threads>
 
   -o </path/to/output file>
 
@@ -30,7 +33,7 @@ EOF
     exit 0
 }
 
-while getopts ":b:c:g:hr:t:x:o:" opt; do
+while getopts ":b:c:g:hr:t:x:o:n:" opt; do
   case $opt in
     b)
      blastfile=$OPTARG
@@ -47,6 +50,9 @@ while getopts ":b:c:g:hr:t:x:o:" opt; do
       ;;
     r)
      referencegff=$OPTARG
+      ;;
+    n)
+      threads=$OPTARG
       ;;  
     t)
      cagefile=$OPTARG
@@ -107,12 +113,13 @@ for i in *fasta; do mv $i "`basename $i .fsa.fasta`.fasta"; done
 # Run transdecoder now
 for files in *fasta; do TransDecoder.LongOrfs -t $files; done
 
-# This groups all the longest_orfs.cds files into one, in the transdecoder file.
+# This groups all the longest_orfs.cds and all the longest_orf.pep files into one, in the transdecoder file.
 find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat.cds 
 
 find . -type f -name longest_orfs.pep -exec cat '{}' \; | cat > longest_orfs_cat.pep 
 
-blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads 2 > longest_orfs_cat.pep.blastp
+# Blasting the transcripts to uniprot db
+blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads $threads > longest_orfs_cat.pep.blastp
 
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
@@ -128,12 +135,13 @@ sed 's/^/>/' transcripts_u_filter.not.genes > temp && mv temp transcripts_u_filt
 
 # Extract fasta file
 python /evolinc_docker/extract_sequences.py transcripts_u_filter.not.genes transcripts_u_filter.fa transcripts_u_filter.not.genes.fa 
+
 sed 's/ /./' transcripts_u_filter.not.genes.fa > temp && mv temp transcripts_u_filter.not.genes.fa
 
 # Blast the fasta file to TE RNA db
 if [ ! -z $blastfile ]; then
      makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
-     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 -num_threads 2 # no blast hits her
+     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits her
 else
     touch transcripts_u_filter.not.genes.fa.blast.out
 fi
@@ -238,7 +246,7 @@ echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapse
 # STEP 7:
 START_TIME_7=$SECONDS
 # Demographics for all lincRNA
-quast.py All.lincRNAs.fa -R ../$referencegenome -G ../$referencegff -o lincRNA_demographics
+quast.py All.lincRNAs.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o lincRNA_demographics
 sed 's/contig/lincRNA/g' lincRNA_demographics/report.txt > temp && mv temp lincRNA_demographics/report.txt
 sed 's/contig/lincRNA/g' lincRNA_demographics/icarus.html > temp && mv temp lincRNA_demographics/icarus.html
 
@@ -248,7 +256,7 @@ sed -i "4i Unique lincRNAs          $uniquelincRNAcount" lincRNA_demographics/re
 sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_demographics/report.txt
 
 # Demographics for Overlapping lincRNA
-quast.py Overlapping.transcripts.fa -R ../$referencegenome -G ../$referencegff -o Overlapping.transcripts_demographics
+quast.py Overlapping.transcripts.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o Overlapping.transcripts_demographics
 sed 's/contig/lincRNA/g' Overlapping.transcripts_demographics/report.txt > temp && mv temp Overlapping.transcripts_demographics/report.txt
 sed 's/contig/Overlapping.transcripts/g' Overlapping.transcripts_demographics/icarus.html > temp && mv temp Overlapping.transcripts_demographics/icarus.html
 
@@ -261,7 +269,7 @@ sed -i "s~# lincRNAs (>~# of total OT lncRNAs (including isoforms) (>~g" Overlap
 sed -i "s~lincRNA~OT lncRNA~g" Overlapping.transcripts_demographics/report.txt
 
 # Demographics for natural antisense lincRNA
-quast.py Natural.antisense.transcripts.fa -R ../$referencegenome -G ../$referencegff -o Natural.antisense.transcripts_demographics
+quast.py Natural.antisense.transcripts.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o Natural.antisense.transcripts_demographics
 sed 's/contig/lincRNA/g' Natural.antisense.transcripts_demographics/report.txt > Natural.antisense.transcripts_demographics/report.txt
 sed 's/contig/Natural.antisense.transcripts/g' Natural.antisense.transcripts_demographics/icarus.html > Natural.antisense.transcripts_demographics/icarus.html
 
@@ -307,7 +315,7 @@ if [ ! -z $knownlinc ]; then
      intersectBed -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output.txt &&
      intersectBed -wb -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output2.txt &&
      python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
-     cp lincRNAs.overlapping.known.lincs.fa intersect_output2.txt ../$output
+     cp lincRNAs.overlapping.known.lincs.fa ../$output
 fi
 
 ELAPSED_TIME_O2=$(($SECONDS - $START_TIME_O2))
