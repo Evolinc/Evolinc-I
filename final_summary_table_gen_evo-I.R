@@ -51,10 +51,32 @@ bind$V2 <- as.character(bind$V2)
 
 bedfinal <- bind %>% group_by(t) %>% summarise(V2 = max(V2))
 
-# Final merge
+# merge
 merge3 <- merge(x = merge2, y = bedfinal, by = 1, all = TRUE)
 colnames(merge3)[5] <- "Number_of_exons"
 
-# Writing data
-write.table(merge3, file = "/Final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
+# Finding out the lincRNA gene id:
+data <- read.table("intersect_output2.txt")
+data1 <- data[,c(14,11,34)]
+gene <- rep("gene=",nrow(data1))
+data1 <- cbind(data1, gene)
+data1 <- data1[,c(1,4,2,3)]
+data1 <- within(data1, C <- paste(data1$V14, data1$gene, sep="."))
+data1 <- within(data1, D <- paste0(data1$C, data1$V11))
+data1 <- data1[,c(6,4)]
+names(data1) <- c("ID","gene")
+data1$gene <- as.character(data1$gene)
+gene2 <- unlist(strsplit(data1$gene, "_"))
+data2 <- matrix(gene2, ncol = 4, byrow = T)
+data3 <- as.data.frame(cbind(data1[,1], data2[,2]))
+names(data3) <- c("id", "gene")
+data4 <- data3 %>% group_by(id) %>% summarise(gene[1])
+data4 <- as.data.frame(data4)
+names(data4)[2] <- "gene" 
 
+# Final merge
+merge4 <- merge(merge3, data4, by=1, all = TRUE)
+merge4 <- merge4[,c(1:3,6,4,5)]
+
+# Writing data
+write.table(merge4, file = "final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
