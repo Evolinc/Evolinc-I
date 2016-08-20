@@ -112,16 +112,14 @@ find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat
 
 find . -type f -name longest_orfs.pep -exec cat '{}' \; | cat > longest_orfs_cat.pep 
 
-makeblastdb -in /uniprot_sprot.fa -dbtype prot
-
-blastp -query longest_orfs_cat.pep -db /uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads 2 > longest_orfs_cat.pep.blastp
+blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads 2 > longest_orfs_cat.pep.blastp
 
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
 
-cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 > longest_orfs_cat.pep.blastp.genes
+cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 | uniq > longest_orfs_cat.pep.blastp.genes
 
-cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes > longest_orfs_cat.cds.pep.blastp.genes
+cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest_orfs_cat.cds.pep.blastp.genes
 
 # Remove these protein coding genes from the filter file
 grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts_u_filter.fa.genes > transcripts_u_filter.not.genes #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
@@ -135,7 +133,7 @@ sed 's/ /./' transcripts_u_filter.not.genes.fa > temp && mv temp transcripts_u_f
 # Blast the fasta file to TE RNA db
 if [ ! -z $blastfile ]; then
      makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
-     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 # no blast hits her
+     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 -num_threads 2 # no blast hits her
 else
     touch transcripts_u_filter.not.genes.fa.blast.out
 fi
@@ -161,7 +159,7 @@ echo "Elapsed time for step 1 is" $ELAPSED_TIME_1 "seconds" > ../$output/elapsed
 # STEP 2:
 START_TIME_2=$SECONDS
 #Extract lincRNA candidates from original cuffmerge GTF file, using unmodified lincRNA.genes file
-awk -F"." '{print $1}' lincRNA.genes >lincRNA.genes.id
+awk -F"." '{print $1}' lincRNA.genes > lincRNA.genes.id
 grep -F -f lincRNA.genes.id ../$comparefile > filtered.lincRNA.gtf
 gff2bed < filtered.lincRNA.gtf > lincRNA.prefilter.bed
 awk 'BEGIN {OFS=FS="\t"} {gsub(/\./,"+",$6)}1' lincRNA.prefilter.bed > temp && mv temp lincRNA.prefilter.bed
@@ -234,8 +232,8 @@ START_TIME_6=$SECONDS
 # Update the cufflinks gtf file
 python /evolinc_docker/update_gtf.py All.lincRNAs.fa ../$comparefile lincRNA.updated.gtf
 
-ELAPSED_TIME_6=$(($SECONDS - $START_TIME_7))
-echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
+ELAPSED_TIME_6=$(($SECONDS - $START_TIME_6))
+echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
 # STEP 7:
 START_TIME_7=$SECONDS
@@ -275,16 +273,16 @@ sed -i "4i Unique NAT lncRNAs        $uniqueNATcount" Natural.antisense.transcri
 sed -i "s~# lincRNAs (>~# of total NAT lncRNAs (including isoforms) (>~g" Natural.antisense.transcripts_demographics/report.txt
 sed -i "s~lincRNA~NAT lncRNA~g" Natural.antisense.transcripts_demographics/report.txt
 
-ELAPSED_TIME_7=$(($SECONDS - $START_TIME_8))
-echo "Elapsed time for Step 8 is" $ELAPSED_TIME_8 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
+ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
+echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
 # STEP 8:
 START_TIME_8=$SECONDS
 # Copy the files to the outputfiles
 cp -r lincRNA.bed All.lincRNAs.fa lincRNA_demographics lincRNA.updated.gtf Overlapping.transcripts.fa Overlapping.transcripts_demographics Natural.antisense.transcripts.fa Natural.antisense.transcripts_demographics ../$output
 
-ELAPSED_TIME_8=$(($SECONDS - $START_TIME_9))
-echo "Elapsed time for Step 9 is" $ELAPSED_TIME_9 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
+ELAPSED_TIME_8=$(($SECONDS - $START_TIME_8))
+echo "Elapsed time for Step 8 is" $ELAPSED_TIME_8 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
 # Optional STEP - 1:
 START_TIME_O1=$SECONDS
@@ -307,8 +305,9 @@ if [ ! -z $knownlinc ]; then
      gff2bed < ../$knownlinc > Atha_known_lncRNAs.bed &&
      sortBed -i Atha_known_lncRNAs.bed > Atha_known_lncRNAs.sorted.bed &&
      intersectBed -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output.txt &&
+     intersectBed -wb -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output2.txt &&
      python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
-     cp lincRNAs.overlapping.known.lincs.fa ../$output
+     cp lincRNAs.overlapping.known.lincs.fa intersect_output2.txt ../$output
 fi
 
 ELAPSED_TIME_O2=$(($SECONDS - $START_TIME_O2))
@@ -318,8 +317,7 @@ echo "Elapsed time for Optional Step 2 is" $ELAPSED_TIME_O2 "seconds" >> ../$out
 if [ ! -z $cagefile ] && [ ! -z $knownlinc ] ; then
    python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
    Rscript /evolinc_docker/final_summary_table_gen_evo-I.R
-   mv /Final_Summary_table_evolinc-I.tsv ../$output
-   cp lincRNA_piechart.png ../$output
+   cp lincRNA_piechart.png final_Summary_table_evolinc-I.tsv ../$output
 fi
 
 # remove all the other files
