@@ -60,9 +60,10 @@ ADD *.sh *.py *.pl *.R /evolinc_docker/
 RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
 
 # Uniprot database
-RUN apt-get install -y gzip
-ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.fa.gz /
-RUN gzip -d /uniprot_sprot.fa.gz
+ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.tar.gz /evolinc_docker/
+RUN tar zxvf /evolinc_docker/uniprot_sprot.tar.gz && rm /evolinc_docker/uniprot_sprot.tar.gz
+
+WORKDIR /
 
 # Setting paths to all the softwares
 ENV PATH /evolinc_docker/cufflinks-2.2.1.Linux_x86_64/:$PATH
@@ -88,3 +89,6 @@ CMD ["-h"]
 # sudo docker build -t="ubuntu/evolinc-i:0.4" .
 #docker run --rm -v $(pwd):/working-dir -w /working-dir ubuntu/evolinc:0.2 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -b TE_RNA_transcripts.fa -o test_out_new -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff
 # sudo docker run --rm -v /home/upendra_35/dockerfile-evolinc/sample.data.arabi:/result -v /home/upendra_35/dockerfile-evolinc/sample.data.arabi/uniprot_sprot.fa:/uniprot_sprot.fa -w /result ubuntu/evolinc:0.4 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -o test_out2 -b TE_RNA_transcripts.fa -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.gff
+#upendra_35$ docker run --rm -v /Users/upendra_35/Documents/git.repos/dockerfile-evolinc/sample.data.arabi:/result -w /result ubuntu/evolinc:0.4 -c AthalianaslutteandluiN30merged.gtf -g TAIR10_chr.fasta -r TAIR10_GFF3_genes_mod.gff -o test_out2 -b TE_RNA_transcripts.fa -t AnnotatedPEATPeaks.gff -x Atha_known_lncRNAs.mod.
+# intersectBed -wb -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output2.txt
+
