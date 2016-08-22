@@ -310,10 +310,10 @@ echo "Elapsed time for Optional Step 1 is" $ELAPSED_TIME_O1 "seconds" >> ../$out
 START_TIME_O2=$SECONDS
 # Known lincRNA
 if [ ! -z $knownlinc ]; then
-     gff2bed < ../$knownlinc > Atha_known_lncRNAs.bed &&
-     sortBed -i Atha_known_lncRNAs.bed > Atha_known_lncRNAs.sorted.bed &&
-     intersectBed -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output.txt &&
-     intersectBed -wb -a lincRNA.bed -b Atha_known_lncRNAs.sorted.bed > intersect_output2.txt &&
+     gff2bed < ../$knownlinc > known_lncRNAs.bed &&
+     sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
+     intersectBed -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
+     intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
      cp lincRNAs.overlapping.known.lincs.fa ../$output
 fi
