@@ -300,6 +300,7 @@ if [ ! -z $cagefile ]; then
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
      closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt &&       
      python /evolinc_docker/closet_bed_compare.py closest_output.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
      cp lincRNAs.with.CAGE.support.annotated.fa ../$output
 fi
 
@@ -315,6 +316,7 @@ if [ ! -z $knownlinc ]; then
      intersectBed -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
      intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
      cp lincRNAs.overlapping.known.lincs.fa ../$output
 fi
 
@@ -324,7 +326,7 @@ echo "Elapsed time for Optional Step 2 is" $ELAPSED_TIME_O2 "seconds" >> ../$out
 # Pie chart if both CAGE and Knownlinc are given
 if [ ! -z $cagefile ] && [ ! -z $knownlinc ] ; then
    python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
-   Rscript /evolinc_docker/final_summary_table_gen_evo-I.R
+   Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa --tss lincRNAs.with.CAGE.support.annotated.fa
    cp lincRNA_piechart.png final_Summary_table_evolinc-I.tsv ../$output
 fi
 
