@@ -301,7 +301,7 @@ if [ ! -z $cagefile ]; then
      closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt &&       
      python /evolinc_docker/closet_bed_compare.py closest_output.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
      Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
-     cp lincRNAs.with.CAGE.support.annotated.fa ../$output
+     cp lincRNAs.with.CAGE.support.annotated.fa final_Summary_table_evolinc-I.tsv ../$output
 fi
 
 ELAPSED_TIME_O1=$(($SECONDS - $START_TIME_O1))
@@ -317,7 +317,7 @@ if [ ! -z $knownlinc ]; then
      intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
      Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
-     cp lincRNAs.overlapping.known.lincs.fa ../$output
+     cp lincRNAs.overlapping.known.lincs.fa final_Summary_table_evolinc-I.tsv ../$output
 fi
 
 ELAPSED_TIME_O2=$(($SECONDS - $START_TIME_O2))
