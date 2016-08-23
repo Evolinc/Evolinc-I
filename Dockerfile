@@ -54,14 +54,15 @@ RUN apt-get install -y r-base r-base-dev
 RUN Rscript -e 'install.packages("splitstackshape", dependencies = TRUE, repos="http://cran.rstudio.com/");'
 RUN Rscript -e 'install.packages("dplyr", dependencies = TRUE, repos="http://cran.rstudio.com/");'
 RUN Rscript -e 'source("https://bioconductor.org/biocLite.R"); biocLite("Biostrings");'
-
-# Evolinc wrapper scripts
-ADD *.sh *.py *.pl *.R /evolinc_docker/
-RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
+RUN Rscript -e 'install.packages("getopt", dependencies = TRUE, repos="http://cran.rstudio.com/");'
 
 # Uniprot database
 ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.tar.gz /evolinc_docker/
 RUN tar zxvf /evolinc_docker/uniprot_sprot.tar.gz && rm /evolinc_docker/uniprot_sprot.tar.gz
+
+# Evolinc wrapper scripts
+ADD *.sh *.py *.pl *.R /evolinc_docker/
+RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
 
 WORKDIR /
 
