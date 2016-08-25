@@ -308,8 +308,8 @@ START_TIME_O1=$SECONDS
 if [ ! -z $cagefile ]; then
      gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
-     closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt &&       
-     python /evolinc_docker/closet_bed_compare.py closest_output.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
+     closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
+     python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
      Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
      cp lincRNAs.with.CAGE.support.annotated.fa final_Summary_table_evolinc-I.tsv ../$output
 fi
