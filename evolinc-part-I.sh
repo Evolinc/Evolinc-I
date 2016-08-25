@@ -93,8 +93,8 @@ grep -e '"u"' -e '"x"' -e '"s"' -e '"o"' -e '"e"' -e '"i"' $comparefile | gffrea
 # Make directory
 mkdir transcripts_u_filter.fa.transdecoder_dir
 
-# For files that are too large, this script will split them up into 100 sequences each  
-perl /evolinc_docker/split_multifasta.pl --input_file transcripts_u_filter.fa --output_dir transcripts_u_filter.fa.transdecoder_dir --seqs_per_file=100
+# For files that are too large, this script will split them up into 1000 sequences each  
+perl /evolinc_docker/split_multifasta.pl --input_file transcripts_u_filter.fa --output_dir transcripts_u_filter.fa.transdecoder_dir --seqs_per_file=1000
 
 # Modifying the header
 sed 's/ .*//' transcripts_u_filter.fa | sed -ne 's/>//p' > transcripts_u_filter.fa.genes
@@ -141,7 +141,7 @@ sed 's/ /./' transcripts_u_filter.not.genes.fa > temp && mv temp transcripts_u_f
 # Blast the fasta file to TE RNA db
 if [ ! -z $blastfile ]; then
      makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
-     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits her
+     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
 else
     touch transcripts_u_filter.not.genes.fa.blast.out
 fi
@@ -158,8 +158,18 @@ python /evolinc_docker/fasta_remove.py transcripts_u_filter.not.genes.fa.blast.o
 # Modify the fasta header to include ">", generating a new file so as to keep the lincRNA.genes file intact for later use.
 sed 's/^/>/' lincRNA.genes > lincRNA.genes.modified
 
+#Modify the TE-containing transcript list to include ">"
+sed 's/^/>/' transcripts_u_filter.not.genes.fa.blast.out.filtered > List_of_TE_containing_transcripts.txt
+
 # Extract the sequences
 python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts_u_filter.not.genes.fa lincRNA.genes.fa
+
+#Extract TE-containing sequences for user
+python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt TE_containing_transcripts.fa
+
+#Create a bed file of TE-containing transcripts for user
+grep -F -f transcripts_u_filter.not.genes.fa.blast.out.filtered ../$comparefile > TE_containing_transcripts.gtf
+gff2bed < TE_containing_transcripts.gtf > TE_containing_transcripts.bed
 
 ELAPSED_TIME_1=$(($SECONDS - $START_TIME_1))
 echo "Elapsed time for step 1 is" $ELAPSED_TIME_1 "seconds" > ../$output/elapsed_time-evolinc-i.txt
@@ -177,45 +187,45 @@ echo "Elapsed time for Step 2 is" $ELAPSED_TIME_2 "seconds" >> ../$output/elapse
 
 # STEP 3:
 START_TIME_3=$SECONDS
-intersectBed -a lincRNA.prefilter.bed -b ../$referencegff -u -s > OT.genes.all.bed
+intersectBed -a lincRNA.prefilter.bed -b ../$referencegff -u -s > SOT.genes.all.bed
 
 # Get the IDs of the overlapping exons.
-cut -f 10 OT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > OT.ids.txt
+cut -f 10 SOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.ids.txt
 
 #create a bed file with all OTs removed
-grep -vFf OT.ids.txt lincRNA.prefilter.bed > lincRNA.noOTs.bed
+grep -vFf SOT.ids.txt lincRNA.prefilter.bed > lincRNA.noSOT.bed
 
 # Create a bed file for overlapping exons from the prefilter file
-grep -Ff OT.ids.txt lincRNA.prefilter.bed > OT.all.bed
+grep -Ff SOT.ids.txt lincRNA.prefilter.bed > SOT.all.bed
 
 #Create a list of all OT transcripts, including all exons related (part of the same transcript) as the exons found to be overlapping genes.
-cut -f 10 OT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > OT.all.txt
+cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.all.txt
 
-# Move OTs to a new file
-python /evolinc_docker/extract_sequences-1.py OT.all.txt lincRNA.genes.fa Overlapping.transcripts.fa
+# Move SOT to a new file
+python /evolinc_docker/extract_sequences-1.py SOT.all.txt lincRNA.genes.fa SOT.fa
 
 ELAPSED_TIME_3=$(($SECONDS - $START_TIME_3))
 echo "Elapsed time for Step 3 is" $ELAPSED_TIME_3 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
 # STEP 4:
 START_TIME_4=$SECONDS
-# Identify transcripts that are overlapping in the opposite direction (NAT)
-intersectBed -a lincRNA.noOTs.bed -b ../$referencegff -u -S > NAT.genes.all.bed
+# Identify transcripts that are overlapping in the opposite direction (AOT)
+intersectBed -a lincRNA.noSOT.bed -b ../$referencegff -u -S > AOT.genes.all.bed
 
 # Make a list from the above file-These are the exons that overlapped
-cut -f 10 NAT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > NAT.ids.txt
+cut -f 10 AOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > AOT.ids.txt
 
-# Generate a bed file of the entire transcript of exons that were found to be NATs
-grep -Ff NAT.ids.txt lincRNA.noOTs.bed > NAT.all.bed
+# Generate a bed file of the entire transcript of exons that were found to be AOT
+grep -Ff AOT.ids.txt lincRNA.noSOT.bed > AOT.all.bed
 
-#Create a list of all NAT transcripts
-cut -f 10 NAT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > NAT.all.txt
+#Create a list of all AOT transcripts
+cut -f 10 AOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > AOT.all.txt
 
-#create a bed file with all NATs and OTs removed
-grep -vFf NAT.ids.txt lincRNA.noOTs.bed > lincRNA.postfilter.bed
+#create a bed file with all AOT and SOT removed
+grep -vFf AOT.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
-python /evolinc_docker/extract_sequences-1.py NAT.all.txt lincRNA.genes.fa Natural.antisense.transcripts.fa
+python /evolinc_docker/extract_sequences-1.py AOT.all.txt lincRNA.genes.fa AOT.fa
 
 
 ELAPSED_TIME_4=$(($SECONDS - $START_TIME_4))
@@ -255,31 +265,31 @@ uniquelincRNAcount=$(cut -f 10 lincRNA.bed | awk -F " " '{print $2}'| sort | uni
 sed -i "4i Unique lincRNAs          $uniquelincRNAcount" lincRNA_demographics/report.txt
 sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_demographics/report.txt
 
-# Demographics for Overlapping lincRNA
-quast.py Overlapping.transcripts.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o Overlapping.transcripts_demographics
-sed 's/contig/lincRNA/g' Overlapping.transcripts_demographics/report.txt > temp && mv temp Overlapping.transcripts_demographics/report.txt
-sed 's/contig/Overlapping.transcripts/g' Overlapping.transcripts_demographics/icarus.html > temp && mv temp Overlapping.transcripts_demographics/icarus.html
+# Demographics for SOT lncRNAs
+quast.py SOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o SOT_demographics
+sed 's/contig/lincRNA/g' SOT_demographics/report.txt > temp && mv temp SOT_demographics/report.txt
+sed 's/contig/Overlapping.transcripts/g' SOT_demographics/icarus.html > temp && mv temp SOT_demographics/icarus.html
 
 # Modify demographics file to include number of unique transcripts (unique XLOCs)
-uniqueOTcount=$(cut -f 10 OT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
-sed -i "4i Unique OT lncRNAs           $uniqueOTcount" Overlapping.transcripts_demographics/report.txt
+uniqueOTcount=$(cut -f 10 SOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
+sed -i "4i Unique SOT lncRNAs           $uniqueOTcount" SOT_demographics/report.txt
 
-# Change the terminology to reflect OTs
-sed -i "s~# lincRNAs (>~# of total OT lncRNAs (including isoforms) (>~g" Overlapping.transcripts_demographics/report.txt
-sed -i "s~lincRNA~OT lncRNA~g" Overlapping.transcripts_demographics/report.txt
+# Change the terminology to reflect SOT
+sed -i "s~# lincRNAs (>~# of total SOT lncRNAs (including isoforms) (>~g" SOT_demographics/report.txt
+sed -i "s~lincRNA~SOT lncRNA~g" SOT_demographics/report.txt
 
-# Demographics for natural antisense lincRNA
-quast.py Natural.antisense.transcripts.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o Natural.antisense.transcripts_demographics
-sed 's/contig/lincRNA/g' Natural.antisense.transcripts_demographics/report.txt > Natural.antisense.transcripts_demographics/report.txt
-sed 's/contig/Natural.antisense.transcripts/g' Natural.antisense.transcripts_demographics/icarus.html > Natural.antisense.transcripts_demographics/icarus.html
+# Demographics for AOT lncRNAs
+quast.py AOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o AOT_demographics
+sed 's/contig/lincRNA/g' AOT_demographics/report.txt > AOT_demographics/report.txt
+sed 's/contig/AOT/g' AOT_demographics/icarus.html > AOT_demographics/icarus.html
 
 # Modify demographics file to include number of unique transcripts (unique XLOCs)
-uniqueNATcount=$(cut -f 10 NAT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
-sed -i "4i Unique NAT lncRNAs        $uniqueNATcount" Natural.antisense.transcripts_demographics/report.txt
+uniqueNATcount=$(cut -f 10 AOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC") #What if the gtf file they input doesn't use the XLOC nomenclature?
+sed -i "4i Unique AOT lncRNAs        $uniqueNATcount" AOT_demographics/report.txt
 
-# Change the terminology to reflect NATs
-sed -i "s~# lincRNAs (>~# of total NAT lncRNAs (including isoforms) (>~g" Natural.antisense.transcripts_demographics/report.txt
-sed -i "s~lincRNA~NAT lncRNA~g" Natural.antisense.transcripts_demographics/report.txt
+# Change the terminology to reflect AOT
+sed -i "s~# lincRNAs (>~# of total AOT lncRNAs (including isoforms) (>~g" AOT_demographics/report.txt
+sed -i "s~lincRNA~AOT lncRNA~g" AOT_demographics/report.txt
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
 echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -287,7 +297,7 @@ echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapse
 # STEP 8:
 START_TIME_8=$SECONDS
 # Copy the files to the outputfiles
-cp -r lincRNA.bed All.lincRNAs.fa lincRNA_demographics lincRNA.updated.gtf Overlapping.transcripts.fa Overlapping.transcripts_demographics Natural.antisense.transcripts.fa Natural.antisense.transcripts_demographics ../$output
+cp -r lincRNA.bed All.lincRNAs.fa lincRNA_demographics lincRNA.updated.gtf SOT.fa SOT.all.bed SOT_demographics AOT.fa AOT.all.bed AOT_demographics TE_containing_transcripts.fa TE_containing_transcripts.bed ../$output
 
 ELAPSED_TIME_8=$(($SECONDS - $START_TIME_8))
 echo "Elapsed time for Step 8 is" $ELAPSED_TIME_8 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
