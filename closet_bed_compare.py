@@ -17,7 +17,7 @@ dic = {}
 
 for line in file:
     line = line.strip().split("\t")
-    if int(line[20]) <= 0 and int(line[20]) > -200:
+    if int(line[20]) <= 100 and int(line[20]) > -100:
 	test = line[9]
 	new = str.split(test, " ")
 	final = new[3]
