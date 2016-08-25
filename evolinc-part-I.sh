@@ -199,11 +199,13 @@ grep -vFf SOT.ids.txt lincRNA.prefilter.bed > lincRNA.noSOT.bed
 grep -Ff SOT.ids.txt lincRNA.prefilter.bed > SOT.all.bed
 
 #Create a list of all OT transcripts, including all exons related (part of the same transcript) as the exons found to be overlapping genes.
-cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.all.txt
+cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.all.txt
 
 # Move SOT to a new file
-python /evolinc_docker/extract_sequences-1.py SOT.all.txt lincRNA.genes.fa SOT.fa
-
+#python /evolinc_docker/extract_sequences-1.py SOT.all.txt lincRNA.genes.fa SOT.fa
+grep -A 1 SOT.all.txt lincRNA.genes.fa > SOT.fa
+#Clean up FASTA file
+sed -i 's~--~~g' SOT.fa # still has an extra new line
 ELAPSED_TIME_3=$(($SECONDS - $START_TIME_3))
 echo "Elapsed time for Step 3 is" $ELAPSED_TIME_3 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
@@ -219,14 +221,16 @@ cut -f 10 AOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g
 grep -Ff AOT.ids.txt lincRNA.noSOT.bed > AOT.all.bed
 
 #Create a list of all AOT transcripts
-cut -f 10 AOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > AOT.all.txt
+cut -f 10 AOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > AOT.all.txt
 
 #create a bed file with all AOT and SOT removed
 grep -vFf AOT.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
-python /evolinc_docker/extract_sequences-1.py AOT.all.txt lincRNA.genes.fa AOT.fa
-
+#python /evolinc_docker/extract_sequences-1.py AOT.all.txt lincRNA.genes.fa AOT.fa
+grep -A 1 AOT.all.txt lincRNA.genes.fa > AOT.fa
+#Clean up FASTA file
+sed -i 's~--~~g' AOT.fa # still has an extra new line
 
 ELAPSED_TIME_4=$(($SECONDS - $START_TIME_4))
 echo "Elapsed time for Step 4 is" $ELAPSED_TIME_4 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -235,7 +239,7 @@ echo "Elapsed time for Step 4 is" $ELAPSED_TIME_4 "seconds" >> ../$output/elapse
 START_TIME_5=$SECONDS
 # Make a list from the lincRNA.postfilter.bed file in order to know which lincRNAs to extract from the lincRNA.genes.fa file
 cut -f 10 lincRNA.postfilter.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > lincRNA.genes.filtered.uniq.genes
-
+# The above line is imperfect right now, as there may be situations where the TCONS already has a gene ID that it gets called by gffread, whereas we replace with the XLOC. 
 # Move lincRNA genes to a new file
 python /evolinc_docker/extract_sequences-1.py lincRNA.genes.filtered.uniq.genes lincRNA.genes.fa All.lincRNAs.fa
 
