@@ -165,10 +165,11 @@ sed 's/^/>/' transcripts_u_filter.not.genes.fa.blast.out.filtered > List_of_TE_c
 python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts_u_filter.not.genes.fa lincRNA.genes.fa
 
 #Extract TE-containing sequences for user
-python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt TE_containing_transcripts.fa
+python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt transcripts_u_filter.not.genes.fa TE_containing_transcripts.fa
 
 #Create a bed file of TE-containing transcripts for user
-grep -F -f transcripts_u_filter.not.genes.fa.blast.out.filtered ../$comparefile > TE_containing_transcripts.gtf
+cut -f 1 -d "." transcripts_u_filter.not.genes.fa.blast.out.filtered > TE_containing_transcript_list_transcript_ID_only.txt
+grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../$comparefile > TE_containing_transcripts.gtf
 gff2bed < TE_containing_transcripts.gtf > TE_containing_transcripts.bed
 
 ELAPSED_TIME_1=$(($SECONDS - $START_TIME_1))
