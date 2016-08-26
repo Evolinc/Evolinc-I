@@ -270,10 +270,14 @@ uniquelincRNAcount=$(cut -f 10 lincRNA.bed | awk -F " " '{print $2}'| sort | uni
 sed -i "4i Unique lincRNAs          $uniquelincRNAcount" lincRNA_demographics/report.txt
 sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_demographics/report.txt
 
+#Clip some of the lincRNA_demographics report info and move to output folder
+head -n 22 lincRNA_demographics/report.txt > lincRNA_demographics.txt
+grep -v "Assembly" lincRNA_demographics.txt > temp && mv temp lincRNA_demographics.txt
+
 # Demographics for SOT lncRNAs
 quast.py SOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o SOT_demographics
 sed 's/contig/lincRNA/g' SOT_demographics/report.txt > temp && mv temp SOT_demographics/report.txt
-sed 's/contig/Overlapping.transcripts/g' SOT_demographics/icarus.html > temp && mv temp SOT_demographics/icarus.html
+sed 's/contig/SOT/g' SOT_demographics/icarus.html > temp && mv temp SOT_demographics/icarus.html
 
 # Modify demographics file to include number of unique transcripts (unique XLOCs)
 uniqueOTcount=$(cut -f 10 SOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
@@ -283,10 +287,14 @@ sed -i "4i Unique SOT lncRNAs           $uniqueOTcount" SOT_demographics/report.
 sed -i "s~# lincRNAs (>~# of total SOT lncRNAs (including isoforms) (>~g" SOT_demographics/report.txt
 sed -i "s~lincRNA~SOT lncRNA~g" SOT_demographics/report.txt
 
+#Clip some of the SOT_demographics report info and move to output folder
+head -n 22 SOT_demographics/report.txt > SOT_demographics.txt
+grep -v "Assembly" SOT_demographics.txt > temp && mv temp SOT_demographics.txt
+
 # Demographics for AOT lncRNAs
 quast.py AOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o AOT_demographics
-sed 's/contig/lincRNA/g' AOT_demographics/report.txt > AOT_demographics/report.txt
-sed 's/contig/AOT/g' AOT_demographics/icarus.html > AOT_demographics/icarus.html
+sed -i 's/contig/lincRNA/g' AOT_demographics/report.txt > AOT_demographics/report.txt
+sed -i 's/contig/AOT/g' AOT_demographics/icarus.html > AOT_demographics/icarus.html
 
 # Modify demographics file to include number of unique transcripts (unique XLOCs)
 uniqueNATcount=$(cut -f 10 AOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC") #What if the gtf file they input doesn't use the XLOC nomenclature?
@@ -295,6 +303,10 @@ sed -i "4i Unique AOT lncRNAs        $uniqueNATcount" AOT_demographics/report.tx
 # Change the terminology to reflect AOT
 sed -i "s~# lincRNAs (>~# of total AOT lncRNAs (including isoforms) (>~g" AOT_demographics/report.txt
 sed -i "s~lincRNA~AOT lncRNA~g" AOT_demographics/report.txt
+
+#Clip some of the AOT_demographics report info and move to output folder
+head -n 22 AOT_demographics/report.txt > AOT_demographics.txt
+grep -v "Assembly" AOT_demographics.txt > temp && mv temp AOT_demographics.txt
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
 echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
