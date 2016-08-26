@@ -340,7 +340,16 @@ START_TIME_O2=$SECONDS
 if [ ! -z $knownlinc ]; then
      gff2bed < ../$knownlinc > known_lncRNAs.bed &&
      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
-     intersectBed -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
+     intersectBed -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt
+     if [! -s intersect_output.txt ]; then
+      rm intersect_output.txt
+     else touch intersect_output.txt
+     fi
+     intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt
+     if [! -s intersect_output2.txt ]; then
+      rm intersect_output2.txt
+     else touch intersect_output2.txt
+     fi
      intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
      Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
