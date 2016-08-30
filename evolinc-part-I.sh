@@ -340,15 +340,18 @@ START_TIME_O2=$SECONDS
 if [ ! -z $knownlinc ]; then
      gff2bed < ../$knownlinc > known_lncRNAs.bed &&
      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
-     intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt
-     if [! -s intersect_output.txt ]; then
-      rm intersect_output.txt
-     else 
-      touch intersect_output.txt
+     intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
+     sed 's~gene_id;~gene_id ~g' intersect_output.txt | awk -F "\t" '{print $10 ";" $20}' | sed 's~\t~~g' | awk -F ";" '{for(i=1;i<=NF;i++){if ($i ~ /gene_id/ || $i ~ /ID=/ || $i ~ /transcript_id /){print $i}}}' | sed 's~gene_id ~~g' | sed 's~"~~g' | sed 's~\n~\t~g' | sed 's~ID=~~g' | sed 's/transcript_id//' | xargs -n 3 | awk '{print $2 ".gene=" $1 "\t" $3}' | sort > temp && mv temp intersect_output.txt
+     if [! -s intersect_output.txt ]; then # non-empty intersect_output file
+        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
+        Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
+        cp lincRNAs.overlapping.known.lincs.fa final_Summary_table_evolinc-I.tsv ../$output
+     else # empty intersect file
+        touch intersect_output.txt
+        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
+        cp lincRNAs.overlapping.known.lincs.fa ../$output
      fi
-     python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
-     cp lincRNAs.overlapping.known.lincs.fa final_Summary_table_evolinc-I.tsv ../$output
+          
 fi
 
 ELAPSED_TIME_O2=$(($SECONDS - $START_TIME_O2))

@@ -14,11 +14,11 @@ args<-commandArgs(TRUE)
 #############################################################
 
 options<-matrix(c('lincRNA',	'l',	1,	"character",
-		  		        'lincRNAbed',	'b',	1,	"character",
-		  		        'overlap',	'v',	2,	"character",
-		  		        'tss',		't',	2,	"character",
-		  		        'help',		'h', 	0,  "logical"),
-		  		         ncol=4,byrow=TRUE)
+		  		  'lincRNAbed',	'b',	1,	"character",
+		  		  'overlap',	'v',	2,	"character",
+		  		  'tss',		't',	2,	"character",
+		  		  'help',		'h', 	0,  "logical"),
+		  		   ncol=4,byrow=TRUE)
 
 ret.opts<-getopt(options,args)
 
@@ -27,7 +27,7 @@ if ( !is.null(ret.opts$help) ) {
   q(status=1);
 }
 
-# No TSS file
+# No TSS file here
 if(is.null(ret.opts$tss)) {
     # All lincRNA's
     fastaFile <- readDNAStringSet(ret.opts$lincRNA)
@@ -44,24 +44,21 @@ if(is.null(ret.opts$tss)) {
     overlap <- cSplit(as.data.table(newmat), "V1", "_o")
     
     # Finding out the lincRNA gene id:
-    data <- read.table("./intersect_output2.txt")
-    data1 <- data[,c(14,11,34)]
-    gene <- rep("gene=",nrow(data1))
-    data1 <- cbind(data1, gene)
-    data1 <- data1[,c(1,4,2,3)]
-    data1 <- within(data1, C <- paste(data1$V14, data1$gene, sep="."))
-    data1 <- within(data1, D <- paste0(data1$C, data1$V11))
-    data1 <- data1[,c(6,4)]
-    names(data1) <- c("ID","gene")
-    data1$gene <- as.character(data1$gene)
-    gene2 <- unlist(strsplit(data1$gene, "_"))
-    data2 <- matrix(gene2, ncol = 4, byrow = T)
-    data3 <- as.data.frame(cbind(data1[,1], data2[,2]))
-    names(data3) <- c("id", "gene")
-    data4 <- data3 %>% group_by(id) %>% summarise(gene[1])
-    data4 <- as.data.frame(data4)
-    names(data4)[2] <- "gene_id" 
-    
+    info = file.info("./intersect_output.txt")
+    if (info$size == 0) {
+        data4 <- data.frame(gene_id = rep("NA",nrow(df)))}
+    else {    
+        data1 <- read.table("./intersect_output.txt", sep="\t")
+        names(data1) <- c("ID","gene")
+        data1$gene <- as.character(data1$gene)
+        gene2 <- unlist(strsplit(data1$gene, "_"))
+        data2 <- matrix(gene2, ncol = 4, byrow = T)
+        data3 <- as.data.frame(cbind(data1[1], data2[,2]))
+        names(data3) <- c("id", "gene")
+        data4 <- as.data.frame(data3 %>% group_by(id) %>% summarise(gene[1]))
+        names(data4)[2] <- "gene_id" 
+    }
+
     # Bed file
     bed_File <- read.table(ret.opts$lincRNAbed)
     t <- paste0(bed_File$V14 , ".gene=", bed_File$V11)
@@ -69,16 +66,18 @@ if(is.null(ret.opts$tss)) {
     bind$t <- as.character(bind$t)
     bind$V2 <- as.character(bind$V2)
     bedfinal <- bind %>% group_by(t) %>% summarise(V2 = max(V2))
-    
     ##Non present file
     cols <- ncol(bedfinal)
     cols <- cols + 1 
-    
     bedfinal[,cols] <- NA
     
     # Merging All three files
     merge1 <- merge(x = df, y = overlap, by = 1, all = TRUE)
-    merge2 <- merge(x = merge1, y = data4, by = 1, all = TRUE)
+    if (info$size == 0) {
+        merge2 <- cbind(merge1, data4) }
+    else {
+        merge2 <- merge(x = merge1, y = data4, by = 1, all = TRUE)
+    }
     merge2$V1_2 <- as.character(merge2$V1_2)
     merge2$gene_id <- as.character(merge2$gene_id)
     merge2$V1_2[!is.na(merge2$V1_2)] <- "Yes"
@@ -89,9 +88,7 @@ if(is.null(ret.opts$tss)) {
     merge3 <- merge(x = merge2, y = bedfinal, by = 1, all = TRUE)
     colnames(merge3)[5] <- "Number_of_exons"
     colnames(merge3)[6] <- "Has_TSS_data"
-    
     merge3 <- merge3[,c(1:4,6,5)]
-    
     # Writing data
     write.table(merge3, file = "final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
 
@@ -118,16 +115,12 @@ if(is.null(ret.opts$tss)) {
     bind$t <- as.character(bind$t)
     bind$V2 <- as.character(bind$V2)
     bedfinal <- bind %>% group_by(t) %>% summarise(V2 = max(V2))
-    
     #non present columns
-    
     cols <- ncol(bedfinal)
     cols <- cols + 1 
-    
     bedfinal[,cols] <- NA
     cols <- cols + 1 
     bedfinal[,cols] <- NA
-    
     
     # Merging All three files
     merge1 <- merge(x = df, y = cage, by = 1, all = TRUE)
@@ -141,10 +134,8 @@ if(is.null(ret.opts$tss)) {
     colnames(merge2)[4] <- "Number_of_exons"
     colnames(merge2)[5] <- "Overlapping_known_lincRNA"
     colnames(merge2)[6] <- "gene_id"
-    
     merge2[,order(colnames(merge2))]
     merge2 <- merge2[,c(1:2,5:6,3:4)]
-    
     # Writing data
     write.table(merge2, file = "final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
 
@@ -180,27 +171,28 @@ if(is.null(ret.opts$tss)) {
     bedfinal <- bind %>% group_by(t) %>% summarise(V2 = max(V2))
 
     # Finding out the lincRNA gene id:
-    data <- read.table("./intersect_output2.txt")
-    data1 <- data[,c(14,11,34)]
-    gene <- rep("gene=",nrow(data1))
-    data1 <- cbind(data1, gene)
-    data1 <- data1[,c(1,4,2,3)]
-    data1 <- within(data1, C <- paste(data1$V14, data1$gene, sep="."))
-    data1 <- within(data1, D <- paste0(data1$C, data1$V11))
-    data1 <- data1[,c(6,4)]
-    names(data1) <- c("ID","gene")
-    data1$gene <- as.character(data1$gene)
-    gene2 <- unlist(strsplit(data1$gene, "_"))
-    data2 <- matrix(gene2, ncol = 4, byrow = T)
-    data3 <- as.data.frame(cbind(data1[,1], data2[,2]))
-    names(data3) <- c("id", "gene")
-    data4 <- data3 %>% group_by(id) %>% summarise(gene[1])
-    data4 <- as.data.frame(data4)
-    names(data4)[2] <- "gene_id" 
+    info = file.info("./intersect_output.txt")
+    if (info$size == 0) {
+        data4 <- data.frame(gene_id = rep("NA",nrow(df)))}
+    else {    
+        data1 <- read.table("./intersect_output.txt", sep="\t")
+        names(data1) <- c("ID","gene")
+        data1$gene <- as.character(data1$gene)
+        gene2 <- unlist(strsplit(data1$gene, "_"))
+        data2 <- matrix(gene2, ncol = 4, byrow = T)
+        data3 <- as.data.frame(cbind(data1[1], data2[,2]))
+        names(data3) <- c("id", "gene")
+        data4 <- as.data.frame(data3 %>% group_by(id) %>% summarise(gene[1]))
+        names(data4)[2] <- "gene_id" 
+    } 
     
     # Merging All three files
     merge1 <- merge(x = df, y = overlap, by = 1, all = TRUE)
-    merge2 <- merge(x = merge1, y = cage, by = 1, all = TRUE)
+    if (info$size == 0) {
+        merge2 <- cbind(merge1, data4) }
+    else {
+        merge2 <- merge(x = merge1, y = data4, by = 1, all = TRUE)
+    }
     merge2$V1_2.x <- as.character(merge2$V1_2.x)
     merge2$V1_2.y <- as.character(merge2$V1_2.y)
     merge2$V1_2.x[!is.na(merge2$V1_2.x)] <- "Yes"
@@ -220,5 +212,3 @@ if(is.null(ret.opts$tss)) {
     # Writing data
     write.table(merge4, file = "final_Summary_table_evolinc-I.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
 }
-
-
