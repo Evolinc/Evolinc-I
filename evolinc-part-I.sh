@@ -204,7 +204,7 @@ cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print 
 
 # Move SOT to a new file
 #python /evolinc_docker/extract_sequences-1.py SOT.all.txt lincRNA.genes.fa SOT.fa
-grep -A 1 SOT.all.txt lincRNA.genes.fa > SOT.fa
+grep -A 1 -f SOT.all.txt lincRNA.genes.fa > SOT.fa
 #Clean up FASTA file
 sed -i 's~--~~g' SOT.fa # still has an extra new line
 ELAPSED_TIME_3=$(($SECONDS - $START_TIME_3))
@@ -229,7 +229,7 @@ grep -vFf AOT.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
 #python /evolinc_docker/extract_sequences-1.py AOT.all.txt lincRNA.genes.fa AOT.fa
-grep -A 1 AOT.all.txt lincRNA.genes.fa > AOT.fa
+grep -A 1 -f AOT.all.txt lincRNA.genes.fa > AOT.fa
 #Clean up FASTA file
 sed -i 's~--~~g' AOT.fa # still has an extra new line
 
