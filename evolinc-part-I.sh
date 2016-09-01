@@ -204,7 +204,7 @@ cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print 
 
 # Move SOT to a new file
 #python /evolinc_docker/extract_sequences-1.py SOT.all.txt lincRNA.genes.fa SOT.fa
-grep -A 1 SOT.all.txt lincRNA.genes.fa > SOT.fa
+grep -A 1 -f SOT.all.txt lincRNA.genes.fa > SOT.fa
 #Clean up FASTA file
 sed -i 's~--~~g' SOT.fa # still has an extra new line
 ELAPSED_TIME_3=$(($SECONDS - $START_TIME_3))
@@ -229,7 +229,7 @@ grep -vFf AOT.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
 #python /evolinc_docker/extract_sequences-1.py AOT.all.txt lincRNA.genes.fa AOT.fa
-grep -A 1 AOT.all.txt lincRNA.genes.fa > AOT.fa
+grep -A 1 -f AOT.all.txt lincRNA.genes.fa > AOT.fa
 #Clean up FASTA file
 sed -i 's~--~~g' AOT.fa # still has an extra new line
 
@@ -273,6 +273,7 @@ sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_d
 #Clip some of the lincRNA_demographics report info and move to output folder
 head -n 22 lincRNA_demographics/report.txt > lincRNA_demographics.txt
 grep -v "Assembly" lincRNA_demographics.txt > temp && mv temp lincRNA_demographics.txt
+cp lincRNA_demographics.txt >../$output
 
 # Demographics for SOT lncRNAs
 quast.py SOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o SOT_demographics
@@ -290,6 +291,7 @@ sed -i "s~lincRNA~SOT lncRNA~g" SOT_demographics/report.txt
 #Clip some of the SOT_demographics report info and move to output folder
 head -n 22 SOT_demographics/report.txt > SOT_demographics.txt
 grep -v "Assembly" SOT_demographics.txt > temp && mv temp SOT_demographics.txt
+cp SOT_demographics.txt >../$output
 
 # Demographics for AOT lncRNAs
 quast.py AOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o AOT_demographics
@@ -307,6 +309,7 @@ sed -i "s~lincRNA~AOT lncRNA~g" AOT_demographics/report.txt
 #Clip some of the AOT_demographics report info and move to output folder
 head -n 22 AOT_demographics/report.txt > AOT_demographics.txt
 grep -v "Assembly" AOT_demographics.txt > temp && mv temp AOT_demographics.txt
+cp AOT_demographics.txt >../$output
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
 echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
