@@ -273,6 +273,7 @@ sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_d
 #Clip some of the lincRNA_demographics report info and move to output folder
 head -n 22 lincRNA_demographics/report.txt > lincRNA_demographics.txt
 grep -v "Assembly" lincRNA_demographics.txt > temp && mv temp lincRNA_demographics.txt
+cp lincRNA_demographics.txt >../$output
 
 # Demographics for SOT lncRNAs
 quast.py SOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o SOT_demographics
@@ -290,6 +291,7 @@ sed -i "s~lincRNA~SOT lncRNA~g" SOT_demographics/report.txt
 #Clip some of the SOT_demographics report info and move to output folder
 head -n 22 SOT_demographics/report.txt > SOT_demographics.txt
 grep -v "Assembly" SOT_demographics.txt > temp && mv temp SOT_demographics.txt
+cp SOT_demographics.txt >../$output
 
 # Demographics for AOT lncRNAs
 quast.py AOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o AOT_demographics
@@ -307,6 +309,7 @@ sed -i "s~lincRNA~AOT lncRNA~g" AOT_demographics/report.txt
 #Clip some of the AOT_demographics report info and move to output folder
 head -n 22 AOT_demographics/report.txt > AOT_demographics.txt
 grep -v "Assembly" AOT_demographics.txt > temp && mv temp AOT_demographics.txt
+cp AOT_demographics.txt >../$output
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
 echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
