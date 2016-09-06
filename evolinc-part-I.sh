@@ -82,16 +82,15 @@ START_TIME=$SECONDS
 # Creat a directory to move all the output files
 mkdir $output
 
-
 # STEP 1:
 START_TIME_1=$SECONDS
 # Extracting classcode u transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts and modify the header to generate genes
-grep '"u"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.u.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa transcripts.u.filter.fa && sed 's/ .*//' transcripts.u.filter.fa | sed -ne 's/>//p' > transcripts.u.filter.fa.genes
-grep '"x"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.x.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
-grep '"s"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.s.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
-grep '"o"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.o.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
-grep '"e"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.e.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
-grep '"i"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.i.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
+grep '"u"' $comparefile | gffread -w transcripts.u.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa transcripts.u.filter.fa && sed 's/ .*//' transcripts.u.filter.fa | sed -ne 's/>//p' > transcripts.u.filter.fa.genes
+grep '"x"' $comparefile | gffread -w transcripts.x.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
+grep '"s"' $comparefile | gffread -w transcripts.s.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
+grep '"o"' $comparefile | gffread -w transcripts.o.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
+grep '"e"' $comparefile | gffread -w transcripts.e.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
+grep '"i"' $comparefile | gffread -w transcripts.i.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
 
 # Concatenate all the genes id's from filtered files
 cat transcripts.*.filter.fa.genes > transcripts.all.filter.genes
@@ -110,7 +109,6 @@ for file in *filter.fa; do TransDecoder.LongOrfs -t $file; done
 
 # This groups all the longest_orfs.cds and all the longest_orf.pep files into one, in the transdecoder file.
 find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat.cds 
-
 find . -type f -name longest_orfs.pep -exec cat '{}' \; | cat > longest_orfs_cat.pep 
 
 # Blasting the transcripts to uniprot db
@@ -125,15 +123,11 @@ cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest
 
 # Remove these protein coding genes from the filter file
 grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts.all.filter.genes > transcripts.all.filter.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
-
 sed 's/^/>/' transcripts.all.filter.not.genes > temp && mv temp transcripts.all.filter.not.genes # changed name here 
 
 # Extract fasta file
-
 cat transcripts.*.filter.fa > transcripts.all.filter.fa
-
 python /evolinc_docker/extract_sequences.py transcripts.all.filter.not.genes transcripts.all.filter.fa transcripts.all.filter.not.genes.fa 
-
 sed 's/ /./' transcripts.all.filter.not.genes.fa > temp && mv temp transcripts.all.filter.not.genes.fa
 
 # Blast the fasta file to TE RNA db
@@ -377,54 +371,9 @@ fi
 ELAPSED_TIME_O1=$(($SECONDS - $START_TIME_O1))
 echo "Elapsed time for Optional Step(s) is" $ELAPSED_TIME_O1 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
-# # Optional STEP - 1:
-# START_TIME_O1=$SECONDS
-# # CAGE data
-# if [ ! -z $cagefile ]; then
-#      gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
-#      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
-#      closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
-#      python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
-#      Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
-#      cp lincRNAs.with.CAGE.support.annotated.fa final_Summary_table.tsv ../$output
-# fi
-
-# ELAPSED_TIME_O1=$(($SECONDS - $START_TIME_O1))
-# echo "Elapsed time for Optional Step 1 is" $ELAPSED_TIME_O1 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
-
-# # Optional STEP - 2:
-# START_TIME_O2=$SECONDS
-# # Known lincRNA
-# if [ ! -z $knownlinc ]; then
-#      gff2bed < ../$knownlinc > known_lncRNAs.bed &&
-#      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
-#      intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
-#      sed 's~gene_id;~gene_id ~g' intersect_output.txt | awk -F "\t" '{print $10 ";" $20}' | sed 's~\t~~g' | awk -F ";" '{for(i=1;i<=NF;i++){if ($i ~ /gene_id/ || $i ~ /ID=/ || $i ~ /transcript_id /){print $i}}}' | sed 's~gene_id ~~g' | sed 's~"~~g' | sed 's~\n~\t~g' | sed 's~ID=~~g' | sed 's/transcript_id//' | xargs -n 3 | awk '{print $2 ".gene=" $1 "\t" $3}' | sort > temp && mv temp intersect_output.txt
-#      if [ ! -s intersect_output.txt ]; then # non-empty intersect_output file
-#         python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
-#         Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
-#         cp lincRNAs.overlapping.known.lincs.fa final_Summary_table.tsv ../$output
-#      else # empty intersect file
-#         touch intersect_output.txt
-#         python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa &&
-#         cp lincRNAs.overlapping.known.lincs.fa ../$output
-#      fi
-          
-# fi
-
-# ELAPSED_TIME_O2=$(($SECONDS - $START_TIME_O2))
-# echo "Elapsed time for Optional Step 2 is" $ELAPSED_TIME_O2 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
-
-# # Pie chart if both CAGE and Knownlinc are given
-# if [ ! -z $cagefile ] && [ ! -z $knownlinc ] ; then
-#    python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
-#    Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa --tss lincRNAs.with.CAGE.support.annotated.fa
-#    cp lincRNA_piechart.png final_Summary_table.tsv ../$output
-# fi
-
 # remove all the other files
-#rm -r ../transcripts_u_filter.fa.transdecoder_dir
-#rm ../*.fa*.*
+rm -r ../transcripts_u_filter.fa.transdecoder_dir
+rm ../*.fa*.*
 
 echo "All necessary files written to" $output
 echo "Finished Evolinc-part-I!"
