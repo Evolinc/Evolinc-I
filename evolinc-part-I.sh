@@ -85,33 +85,28 @@ mkdir $output
 
 # STEP 1:
 START_TIME_1=$SECONDS
-# Extracting classcode u transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts
-grep -e '"u"' -e '"x"' -e '"s"' -e '"o"' -e '"e"' -e '"i"' $comparefile | gffread -w \
-    transcripts_u.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts_u.fa \
-    transcripts_u_filter.fa
+# Extracting classcode u transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts and modify the header to generate genes
+grep '"u"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.u.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa transcripts.u.filter.fa && sed 's/ .*//' transcripts.u.filter.fa | sed -ne 's/>//p' > transcripts.u.filter.fa.genes
+grep '"x"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.x.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
+grep '"s"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.s.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
+grep '"o"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.o.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
+grep '"e"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.e.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
+grep '"i"' AthalianaslutteandluiN30merged.gtf | gffread -w transcripts.i.fa -g TAIR10_chr.fasta - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
 
-# Make directory
+# Concatenate all the genes id's from filtered files
+cat transcripts.*.filter.fa.genes > transcripts.all.filter.genes
+
+# Make new directory
 mkdir transcripts_u_filter.fa.transdecoder_dir
 
-# For files that are too large, this script will split them up into 1000 sequences each  
-perl /evolinc_docker/split_multifasta.pl --input_file transcripts_u_filter.fa --output_dir transcripts_u_filter.fa.transdecoder_dir --seqs_per_file=1000
-
-# Modifying the header
-sed 's/ .*//' transcripts_u_filter.fa | sed -ne 's/>//p' > transcripts_u_filter.fa.genes
-
 # Move the transcript files to this directory transcripts_u_filter.fa.transdecoder_dir
-mv transcripts_u.fa transcripts_u_filter.fa transcripts_u_filter.fa.genes transcripts_u_filter.fa.transdecoder_dir/
+mv transcripts.* transcripts_u_filter.fa.transdecoder_dir/
 
 # Change the directory
 cd transcripts_u_filter.fa.transdecoder_dir
 
-# Remove empty lines and change the file suffix
-for i in *.fsa; do sed '/^\s*$/d' $i > $i.fasta; done
-rm *.fsa
-for i in *fasta; do mv $i "`basename $i .fsa.fasta`.fasta"; done
-
 # Run transdecoder now
-for files in *fasta; do TransDecoder.LongOrfs -t $files; done
+for file in *filter.fa; do TransDecoder.LongOrfs -t $file; done
 
 # This groups all the longest_orfs.cds and all the longest_orf.pep files into one, in the transdecoder file.
 find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat.cds 
@@ -129,46 +124,49 @@ cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 | uniq > longest_orfs_cat.
 cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest_orfs_cat.cds.pep.blastp.genes
 
 # Remove these protein coding genes from the filter file
-grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts_u_filter.fa.genes > transcripts_u_filter.not.genes #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
+grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts.all.filter.genes > transcripts.all.filter.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
 
-sed 's/^/>/' transcripts_u_filter.not.genes > temp && mv temp transcripts_u_filter.not.genes # changed name here 
+sed 's/^/>/' transcripts.all.filter.not.genes > temp && mv temp transcripts.all.filter.not.genes # changed name here 
 
 # Extract fasta file
-python /evolinc_docker/extract_sequences.py transcripts_u_filter.not.genes transcripts_u_filter.fa transcripts_u_filter.not.genes.fa 
 
-sed 's/ /./' transcripts_u_filter.not.genes.fa > temp && mv temp transcripts_u_filter.not.genes.fa
+cat transcripts.*.filter.fa > transcripts.all.filter.fa
+
+python /evolinc_docker/extract_sequences.py transcripts.all.filter.not.genes transcripts.all.filter.fa transcripts.all.filter.not.genes.fa 
+
+sed 's/ /./' transcripts.all.filter.not.genes.fa > temp && mv temp transcripts.all.filter.not.genes.fa
 
 # Blast the fasta file to TE RNA db
 if [ ! -z $blastfile ]; then
      makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
-     blastn -query transcripts_u_filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts_u_filter.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
+     blastn -query transcripts.all.filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts.all.filter.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
 else
-    touch transcripts_u_filter.not.genes.fa.blast.out
+    touch transcripts.all.filter.not.genes.fa.blast.out
 fi
 
 # Filter the output to select the best transcript based on e-value and bit-score
-python /evolinc_docker/filter_sequences.py transcripts_u_filter.not.genes.fa.blast.out transcripts_u_filter.not.genes.fa.blast.out.filtered
+python /evolinc_docker/filter_sequences.py transcripts.all.filter.not.genes.fa.blast.out transcripts.all.filter.not.genes.fa.blast.out.filtered
 
 # Modify the header in the fasta file to extract header only
-grep ">" transcripts_u_filter.not.genes.fa | sed 's/>//' > transcripts_u_filter.not.genes_only
+grep ">" transcripts.all.filter.not.genes.fa | sed 's/>//' > transcripts.all.filter.not.genes_only
 
 # Now remove the blast hits from the fasta file
-python /evolinc_docker/fasta_remove.py transcripts_u_filter.not.genes.fa.blast.out.filtered transcripts_u_filter.not.genes_only lincRNA.genes
+python /evolinc_docker/fasta_remove.py transcripts.all.filter.not.genes.fa.blast.out.filtered transcripts.all.filter.not.genes_only lincRNA.genes
 
 # Modify the fasta header to include ">", generating a new file so as to keep the lincRNA.genes file intact for later use.
 sed 's/^/>/' lincRNA.genes > lincRNA.genes.modified
 
 #Modify the TE-containing transcript list to include ">"
-sed 's/^/>/' transcripts_u_filter.not.genes.fa.blast.out.filtered > List_of_TE_containing_transcripts.txt
+sed 's/^/>/' transcripts.all.filter.not.genes.fa.blast.out.filtered > List_of_TE_containing_transcripts.txt
 
 # Extract the sequences
-python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts_u_filter.not.genes.fa lincRNA.genes.fa
+python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts.all.filter.not.genes.fa lincRNA.genes.fa
 
 #Extract TE-containing sequences for user
-python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt transcripts_u_filter.not.genes.fa TE_containing_transcripts.fa
+python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt transcripts.all.filter.not.genes.fa TE_containing_transcripts.fa
 
 #Create a bed file of TE-containing transcripts for user
-cut -f 1 -d "." transcripts_u_filter.not.genes.fa.blast.out.filtered > TE_containing_transcript_list_transcript_ID_only.txt
+cut -f 1 -d "." transcripts.all.filter.not.genes.fa.blast.out.filtered > TE_containing_transcript_list_transcript_ID_only.txt
 grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../$comparefile > TE_containing_transcripts.gtf
 gff2bed < TE_containing_transcripts.gtf > TE_containing_transcripts.bed
 
