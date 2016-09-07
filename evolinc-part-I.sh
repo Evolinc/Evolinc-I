@@ -6,7 +6,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -c cuffcompare -g genome -r gff -o output -threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
+      echo "Usage : sh $0 -c cuffcompare -g genome -r gff -o output -n threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
       echo ""
 
 cat <<'EOF'
@@ -195,7 +195,6 @@ grep -Ff SOT.ids.txt lincRNA.prefilter.bed > SOT.all.bed
 cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.all.txt
 
 # Move SOT to a new file
-#python /evolinc_docker/extract_sequences-1.py SOT.all.txt lincRNA.genes.fa SOT.fa
 grep -A 1 -f SOT.all.txt lincRNA.genes.fa > SOT.fa
 #Clean up FASTA file
 sed -i 's~--~~g' SOT.fa # still has an extra new line
@@ -220,7 +219,6 @@ cut -f 10 AOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print 
 grep -vFf AOT.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
-#python /evolinc_docker/extract_sequences-1.py AOT.all.txt lincRNA.genes.fa AOT.fa
 grep -A 1 -f AOT.all.txt lincRNA.genes.fa > AOT.fa
 #Clean up FASTA file
 sed -i 's~--~~g' AOT.fa # still has an extra new line
@@ -228,16 +226,16 @@ sed -i 's~--~~g' AOT.fa # still has an extra new line
 ELAPSED_TIME_4=$(($SECONDS - $START_TIME_4))
 echo "Elapsed time for Step 4 is" $ELAPSED_TIME_4 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
-# STEP 5: Generating final lincRNA.bed file and the final set of lincRNA sequences
+# STEP 5: Generating final lincRNAs.bed file and the final set of lincRNA sequences
 START_TIME_5=$SECONDS
 # Make a list from the lincRNA.postfilter.bed file in order to know which lincRNAs to extract from the lincRNA.genes.fa file
 cut -f 10 lincRNA.postfilter.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i ".gene=" $2}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > lincRNA.genes.filtered.uniq.genes
 # The above line is imperfect right now, as there may be situations where the TCONS already has a gene ID that it gets called by gffread, whereas we replace with the XLOC. 
 # Move lincRNA genes to a new file
-python /evolinc_docker/extract_sequences-1.py lincRNA.genes.filtered.uniq.genes lincRNA.genes.fa All.lincRNAs.fa
+python /evolinc_docker/extract_sequences-1.py lincRNA.genes.filtered.uniq.genes lincRNA.genes.fa lincRNAs.fa
 
 # Sort the bed file for final output
-sortBed -i lincRNA.postfilter.bed > lincRNA.bed
+sortBed -i lincRNA.postfilter.bed > lincRNAs.bed
 
 ELAPSED_TIME_5=$(($SECONDS - $START_TIME_5))
 echo "Elapsed time for Step 5 is" $ELAPSED_TIME_5 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -245,7 +243,7 @@ echo "Elapsed time for Step 5 is" $ELAPSED_TIME_5 "seconds" >> ../$output/elapse
 # STEP 6: 
 START_TIME_6=$SECONDS
 # Update the cufflinks gtf file
-python /evolinc_docker/update_gtf.py All.lincRNAs.fa ../$comparefile lincRNA.updated.gtf
+python /evolinc_docker/update_gtf.py lincRNAs.fa ../$comparefile lincRNA.updated.gtf
 
 ELAPSED_TIME_6=$(($SECONDS - $START_TIME_6))
 echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -253,19 +251,19 @@ echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapse
 # STEP 7:
 START_TIME_7=$SECONDS
 # Demographics for all lincRNA
-quast.py All.lincRNAs.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o lincRNA_demographics
+quast.py lincRNAs.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o lincRNA_demographics
 sed 's/contig/lincRNA/g' lincRNA_demographics/report.txt > temp && mv temp lincRNA_demographics/report.txt
 sed 's/contig/lincRNA/g' lincRNA_demographics/icarus.html > temp && mv temp lincRNA_demographics/icarus.html
 
 # Identify the number of unique lincRNAs in bed file, and update the demographics file
-uniquelincRNAcount=$(cut -f 10 lincRNA.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
+uniquelincRNAcount=$(cut -f 10 lincRNAs.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
 sed -i "4i Unique lincRNAs          $uniquelincRNAcount" lincRNA_demographics/report.txt
 sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_demographics/report.txt
 
 #Clip some of the lincRNA_demographics report info and move to output folder
 head -n 22 lincRNA_demographics/report.txt > lincRNA_demographics.txt
 grep -v "Assembly" lincRNA_demographics.txt > temp && mv temp lincRNA_demographics.txt
-cp lincRNA_demographics.txt ../$output
+rm -r lincRNA_demographics
 
 # Demographics for SOT lncRNAs
 quast.py SOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o SOT_demographics
@@ -283,7 +281,7 @@ sed -i "s~lincRNA~SOT lncRNA~g" SOT_demographics/report.txt
 #Clip some of the SOT_demographics report info and move to output folder
 head -n 22 SOT_demographics/report.txt > SOT_demographics.txt
 grep -v "Assembly" SOT_demographics.txt > temp && mv temp SOT_demographics.txt
-cp SOT_demographics.txt ../$output
+rm -r lincRNA_demographics
 
 # Demographics for AOT lncRNAs
 quast.py AOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o AOT_demographics
@@ -301,7 +299,7 @@ sed -i "s~lincRNA~AOT lncRNA~g" AOT_demographics/report.txt
 #Clip some of the AOT_demographics report info and move to output folder
 head -n 22 AOT_demographics/report.txt > AOT_demographics.txt
 grep -v "Assembly" AOT_demographics.txt > temp && mv temp AOT_demographics.txt
-cp AOT_demographics.txt ../$output
+rm -r AOT_demographics
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
 echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -309,7 +307,10 @@ echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapse
 # STEP 8:
 START_TIME_8=$SECONDS
 # Copy the files to the outputfiles
-cp -r lincRNA.bed All.lincRNAs.fa lincRNA_demographics lincRNA.updated.gtf SOT.fa SOT.all.bed SOT_demographics AOT.fa AOT.all.bed AOT_demographics TE_containing_transcripts.fa TE_containing_transcripts.bed ../$output
+cp lincRNAs.bed lincRNAs.fa lincRNA.updated.gtf lincRNA_demographics.txt ../$output
+mkdir Other_lncRNA
+cp SOT.fa SOT.all.bed AOT.fa AOT.all.bed SOT_demographics.txt AOT_demographics.txt TE_containing_transcripts.fa TE_containing_transcripts.bed Other_lncRNA
+cp -r Other_lncRNA ../$output
 
 ELAPSED_TIME_8=$(($SECONDS - $START_TIME_8))
 echo "Elapsed time for Step 8 is" $ELAPSED_TIME_8 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -322,13 +323,13 @@ then
       
      gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
-     closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
-     python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
+     closestBed -a lincRNAs.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
+     python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
      
      gff2bed < ../$knownlinc > known_lncRNAs.bed &&
      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
-     intersectBed -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
-     intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
+     intersectBed -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
+     intersectBed -wb -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      sed 's~gene_id;~gene_id ~g' intersect_output2.txt | awk -F "\t" '{print $10 ";" $20}' | sed 's~\t~~g' | awk -F ";" '{for(i=1;i<=NF;i++){if ($i ~ /gene_id/ || $i ~ /ID=/ || $i ~ /transcript_id /){print $i}}}' | sed 's~gene_id ~~g' | sed 's~"~~g' | sed 's~\n~\t~g' | sed 's~ID=~~g' | sed 's/transcript_id//' | xargs -n 3 | awk '{print $2 ".gene=" $1 "\t" $3}' | sort > temp && mv temp intersect_output2.txt
      if [ ! -s intersect_output2.txt ]; then # non-empty intersect_output file
         python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
@@ -337,25 +338,24 @@ then
         python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
      fi
      python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa --tss lincRNAs.with.CAGE.support.annotated.fa &&
-     
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa --tss lincRNAs.with.CAGE.support.annotated.fa &&
      cp lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa lincRNA_piechart.png final_Summary_table.tsv ../$output
 
 elif [ ! -z $cagefile ]; 
 then
      gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
-     closestBed -a lincRNA.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
+     closestBed -a lincRNAs.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
      python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNAs.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
      cp lincRNAs.with.CAGE.support.annotated.fa final_Summary_table.tsv ../$output
 
 elif [ ! -z $knownlinc ]; 
 then
     gff2bed < ../$knownlinc > known_lncRNAs.bed &&
      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
-     intersectBed -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
-     intersectBed -wb -a lincRNA.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
+     intersectBed -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
+     intersectBed -wb -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      sed 's~gene_id;~gene_id ~g' intersect_output2.txt | awk -F "\t" '{print $10 ";" $20}' | sed 's~\t~~g' | awk -F ";" '{for(i=1;i<=NF;i++){if ($i ~ /gene_id/ || $i ~ /ID=/ || $i ~ /transcript_id /){print $i}}}' | sed 's~gene_id ~~g' | sed 's~"~~g' | sed 's~\n~\t~g' | sed 's~ID=~~g' | sed 's/transcript_id//' | xargs -n 3 | awk '{print $2 ".gene=" $1 "\t" $3}' | sort > temp && mv temp intersect_output2.txt
      if [ ! -s intersect_output2.txt ]; then # non-empty intersect_output file
         python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
@@ -363,7 +363,7 @@ then
         touch intersect_output.txt &&
         python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
      fi
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNA.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
      cp lincRNAs.overlapping.known.lincs.fa final_Summary_table.tsv ../$output
 
 fi
