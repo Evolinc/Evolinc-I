@@ -332,13 +332,13 @@ then
      intersectBed -wb -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      sed 's~gene_id;~gene_id ~g' intersect_output2.txt | awk -F "\t" '{print $10 ";" $20}' | sed 's~\t~~g' | awk -F ";" '{for(i=1;i<=NF;i++){if ($i ~ /gene_id/ || $i ~ /ID=/ || $i ~ /transcript_id /){print $i}}}' | sed 's~gene_id ~~g' | sed 's~"~~g' | sed 's~\n~\t~g' | sed 's~ID=~~g' | sed 's/transcript_id//' | xargs -n 3 | awk '{print $2 ".gene=" $1 "\t" $3}' | sort > temp && mv temp intersect_output2.txt
      if [ ! -s intersect_output2.txt ]; then # non-empty intersect_output file
-        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
+        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
      else # empty intersect file
         touch intersect_output.txt &&
-        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
+        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
      fi
-     python /evolinc_docker/lincRNA_fig.py All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa --tss lincRNAs.with.CAGE.support.annotated.fa &&
+     python /evolinc_docker/lincRNA_fig.py lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa --tss lincRNAs.with.CAGE.support.annotated.fa &&
      cp lincRNAs.with.CAGE.support.annotated.fa lincRNAs.overlapping.known.lincs.fa lincRNA_piechart.png final_Summary_table.tsv ../$output
 
 elif [ ! -z $cagefile ]; 
@@ -346,8 +346,8 @@ then
      gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
      closestBed -a lincRNAs.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
-     python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt All.lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNAs.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
+     python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA lincRNAs.fa --lincRNAbed lincRNAs.bed --tss lincRNAs.with.CAGE.support.annotated.fa &&
      cp lincRNAs.with.CAGE.support.annotated.fa final_Summary_table.tsv ../$output
 
 elif [ ! -z $knownlinc ]; 
@@ -358,12 +358,12 @@ then
      intersectBed -wb -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
      sed 's~gene_id;~gene_id ~g' intersect_output2.txt | awk -F "\t" '{print $10 ";" $20}' | sed 's~\t~~g' | awk -F ";" '{for(i=1;i<=NF;i++){if ($i ~ /gene_id/ || $i ~ /ID=/ || $i ~ /transcript_id /){print $i}}}' | sed 's~gene_id ~~g' | sed 's~"~~g' | sed 's~\n~\t~g' | sed 's~ID=~~g' | sed 's/transcript_id//' | xargs -n 3 | awk '{print $2 ".gene=" $1 "\t" $3}' | sort > temp && mv temp intersect_output2.txt
      if [ ! -s intersect_output2.txt ]; then # non-empty intersect_output file
-        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
+        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
      else # empty intersect file
         touch intersect_output.txt &&
-        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt All.lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
+        python /evolinc_docker/interesect_bed_compare.py intersect_output.txt lincRNAs.fa lincRNAs.overlapping.known.lincs.fa
      fi
-     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA All.lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
+     Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
      cp lincRNAs.overlapping.known.lincs.fa final_Summary_table.tsv ../$output
 
 fi
