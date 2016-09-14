@@ -63,7 +63,7 @@ RUN python get-pip.py
 RUN pip install biopython
 
 # Evolinc wrapper scripts
-ADD *.sh *.py *.pl *.R /evolinc_docker/
+ADD *.sh *.py *.R /evolinc_docker/
 RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
 
 WORKDIR /
