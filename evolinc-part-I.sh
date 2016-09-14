@@ -52,7 +52,7 @@ while getopts ":b:c:g:hr:t:x:o:n:" opt; do
      referencegff=$OPTARG
       ;;
     n)
-      threads=$OPTARG
+     threads=$OPTARG
       ;;  
     t)
      cagefile=$OPTARG
@@ -251,55 +251,38 @@ echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapse
 # STEP 7:
 START_TIME_7=$SECONDS
 # Demographics for all lincRNA
-quast.py lincRNAs.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o lincRNA_demographics
-sed 's/contig/lincRNA/g' lincRNA_demographics/report.txt > temp && mv temp lincRNA_demographics/report.txt
-sed 's/contig/lincRNA/g' lincRNA_demographics/icarus.html > temp && mv temp lincRNA_demographics/icarus.html
+python /evolinc_docker/seq_length.py lincRNAs.fa > lincRNA.txt
+
+cat lincRNA.txt | sort -n | cut -f 2 | awk 'NR == 1 { max=$1; min=$1; sum=0 }
+   { if ($1>max) max=$1; if ($1<min) min=$1; sum+=$1;}
+   END {printf "Total number of lincRNAs (including isoforms): %d\nTotal length(bp): %d\nSmallest lincRNA(bp): %d\nLargest lincRNA(bp): %d\nAverage length of lincRNA(bp): %f\n", NR, sum, min, max, sum/NR}' > lincRNA_demographics.txt
 
 # Identify the number of unique lincRNAs in bed file, and update the demographics file
 uniquelincRNAcount=$(cut -f 10 lincRNAs.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
-sed -i "4i Unique lincRNAs          $uniquelincRNAcount" lincRNA_demographics/report.txt
-sed -i "s~# lincRNAs (>~# of total lincRNAs (including isoforms) (>~g" lincRNA_demographics/report.txt
+echo "Total number of unique lincRNAs = $uniquelincRNAcount" >> lincRNA_demographics.txt
 
-#Clip some of the lincRNA_demographics report info and move to output folder
-head -n 22 lincRNA_demographics/report.txt > lincRNA_demographics.txt
-grep -v "Assembly" lincRNA_demographics.txt > temp && mv temp lincRNA_demographics.txt
-rm -r lincRNA_demographics
 
 # Demographics for SOT lncRNAs
-quast.py SOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o SOT_demographics
-sed 's/contig/lincRNA/g' SOT_demographics/report.txt > temp && mv temp SOT_demographics/report.txt
-sed 's/contig/SOT/g' SOT_demographics/icarus.html > temp && mv temp SOT_demographics/icarus.html
+python /evolinc_docker/seq_length.py SOT.fa > SOT.lincRNA.txt
 
-# Modify demographics file to include number of unique transcripts (unique XLOCs)
-uniqueOTcount=$(cut -f 10 SOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
-sed -i "4i Unique SOT lncRNAs           $uniqueOTcount" SOT_demographics/report.txt
+cat SOT.lincRNA.txt | sort -n | cut -f 2 | awk 'NR == 1 { max=$1; min=$1; sum=0 }
+   { if ($1>max) max=$1; if ($1<min) min=$1; sum+=$1;}
+   END {printf "Total number of lincRNAs (including isoforms): %d\nTotal length(bp): %d\nSmallest lincRNA(bp): %d\nLargest lincRNA(bp): %d\nAverage length of lincRNA(bp): %f\n", NR, sum, min, max, sum/NR}' > SOT_lincRNA_demographics.txt
 
-# Change the terminology to reflect SOT
-sed -i "s~# lincRNAs (>~# of total SOT lncRNAs (including isoforms) (>~g" SOT_demographics/report.txt
-sed -i "s~lincRNA~SOT lncRNA~g" SOT_demographics/report.txt
+# Identify the number of unique lincRNAs in bed file, and update the demographics file
+uniquelincRNAcount=$(cut -f 10 SOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
+echo "Total number of unique lincRNAs = $uniquelincRNAcount" >> SOT_lincRNA_demographics.txt
 
-#Clip some of the SOT_demographics report info and move to output folder
-head -n 22 SOT_demographics/report.txt > SOT_demographics.txt
-grep -v "Assembly" SOT_demographics.txt > temp && mv temp SOT_demographics.txt
-rm -r lincRNA_demographics
+# # Demographics for AOT lncRNAs
+python /evolinc_docker/seq_length.py AOT.fa > AOT.lincRNA.txt
 
-# Demographics for AOT lncRNAs
-quast.py AOT.fa -R ../$referencegenome -G ../$referencegff --threads $threads -o AOT_demographics
-sed -i 's/contig/lincRNA/g' AOT_demographics/report.txt > AOT_demographics/report.txt
-sed -i 's/contig/AOT/g' AOT_demographics/icarus.html > AOT_demographics/icarus.html
+cat AOT.lincRNA.txt | sort -n | cut -f 2 | awk 'NR == 1 { max=$1; min=$1; sum=0 }
+   { if ($1>max) max=$1; if ($1<min) min=$1; sum+=$1;}
+   END {printf "Total number of lincRNAs (including isoforms): %d\nTotal length(bp): %d\nSmallest lincRNA(bp): %d\nLargest lincRNA(bp): %d\nAverage length of lincRNA(bp): %f\n", NR, sum, min, max, sum/NR}' > AOT_lincRNA_demographics.txt
 
-# Modify demographics file to include number of unique transcripts (unique XLOCs)
-uniqueNATcount=$(cut -f 10 AOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC") #What if the gtf file they input doesn't use the XLOC nomenclature?
-sed -i "4i Unique AOT lncRNAs        $uniqueNATcount" AOT_demographics/report.txt
-
-# Change the terminology to reflect AOT
-sed -i "s~# lincRNAs (>~# of total AOT lncRNAs (including isoforms) (>~g" AOT_demographics/report.txt
-sed -i "s~lincRNA~AOT lncRNA~g" AOT_demographics/report.txt
-
-#Clip some of the AOT_demographics report info and move to output folder
-head -n 22 AOT_demographics/report.txt > AOT_demographics.txt
-grep -v "Assembly" AOT_demographics.txt > temp && mv temp AOT_demographics.txt
-rm -r AOT_demographics
+# Identify the number of unique lincRNAs in bed file, and update the demographics file
+uniquelincRNAcount=$(cut -f 10 aOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
+echo "Total number of unique lincRNAs = $uniquelincRNAcount" >> AOT_lincRNA_demographics.txt
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
 echo "Elapsed time for Step 7 is" $ELAPSED_TIME_7 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
@@ -309,7 +292,7 @@ START_TIME_8=$SECONDS
 # Copy the files to the outputfiles
 cp lincRNAs.bed lincRNAs.fa lincRNA.updated.gtf lincRNA_demographics.txt ../$output
 mkdir Other_lncRNA
-cp SOT.fa SOT.all.bed AOT.fa AOT.all.bed SOT_demographics.txt AOT_demographics.txt TE_containing_transcripts.fa TE_containing_transcripts.bed Other_lncRNA
+cp SOT.fa SOT.all.bed AOT.fa AOT.all.bed SOT_lincRNA_demographics.txt AOT_lincRNA_demographics.txt TE_containing_transcripts.fa TE_containing_transcripts.bed Other_lncRNA
 cp -r Other_lncRNA ../$output
 
 ELAPSED_TIME_8=$(($SECONDS - $START_TIME_8))
@@ -371,7 +354,7 @@ fi
 ELAPSED_TIME_O1=$(($SECONDS - $START_TIME_O1))
 echo "Elapsed time for Optional Step(s) is" $ELAPSED_TIME_O1 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
-# remove all the other files
+# # remove all the other files
 rm -r ../transcripts_u_filter.fa.transdecoder_dir
 rm ../*.fa*.*
 

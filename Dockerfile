@@ -26,9 +26,6 @@ RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz |
 RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-x64-linux.tar.gz > ncbi-blast-2.4.0+-x64-linux.tar.gz
 RUN tar xvf ncbi-blast-2.4.0+-x64-linux.tar.gz
 
-# Quast
-RUN wget -O- https://downloads.sourceforge.net/project/quast/quast-4.0.tar.gz | tar zxvf -
-
 # Samtools
 RUN wget --no-check-certificate http://sourceforge.net/projects/samtools/files/samtools/1.0/samtools-bcftools-htslib-1.0_x64-linux.tar.bz2/download
 RUN tar xvf download
@@ -60,6 +57,11 @@ RUN Rscript -e 'install.packages("getopt", dependencies = TRUE, repos="http://cr
 ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.tar.gz /evolinc_docker/
 RUN tar zxvf /evolinc_docker/uniprot_sprot.tar.gz && rm /evolinc_docker/uniprot_sprot.tar.gz
 
+# Biopython
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+RUN python get-pip.py
+RUN pip install biopython
+
 # Evolinc wrapper scripts
 ADD *.sh *.py *.pl *.R /evolinc_docker/
 RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
@@ -73,7 +75,6 @@ ENV PATH /evolinc_docker/ncbi-blast-2.4.0+/bin/:$PATH
 ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/samtools-bcftools-htslib-1.0_x64-linux/bin/:$PATH
 ENV PATH /evolinc_docker/bin/:$PATH
-ENV PATH /evolinc_docker/quast-4.0/:$PATH
 
 # Entrypoint
 ENTRYPOINT ["evolinc-part-I.sh"]
