@@ -281,7 +281,7 @@ cat AOT.lincRNA.txt | sort -n | cut -f 2 | awk 'NR == 1 { max=$1; min=$1; sum=0 
    END {printf "Total number of lincRNAs (including isoforms): %d\nTotal length(bp): %d\nSmallest lincRNA(bp): %d\nLargest lincRNA(bp): %d\nAverage length of lincRNA(bp): %f\n", NR, sum, min, max, sum/NR}' > AOT_lincRNA_demographics.txt
 
 # Identify the number of unique lincRNAs in bed file, and update the demographics file
-uniquelincRNAcount=$(cut -f 10 aOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
+uniquelincRNAcount=$(cut -f 10 AOT.all.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
 echo "Total number of unique lincRNAs = $uniquelincRNAcount" >> AOT_lincRNA_demographics.txt
 
 ELAPSED_TIME_7=$(($SECONDS - $START_TIME_7))
