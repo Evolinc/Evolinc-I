@@ -349,13 +349,16 @@ then
      Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA lincRNAs.fa --lincRNAbed lincRNAs.bed --overlap lincRNAs.overlapping.known.lincs.fa &&
      cp lincRNAs.overlapping.known.lincs.fa final_Summary_table.tsv ../$output
 
+else
+    Rscript /evolinc_docker/final_summary_table_gen_evo-I.R --lincRNA lincRNAs.fa --lincRNAbed lincRNAs.bed
+    cp final_Summary_table.tsv ../$output
 fi
 
 ELAPSED_TIME_O1=$(($SECONDS - $START_TIME_O1))
 echo "Elapsed time for Optional Step(s) is" $ELAPSED_TIME_O1 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
 # # remove all the other files
-rm -r ../transcripts_u_filter.fa.transdecoder_dir
+#rm -r ../transcripts_u_filter.fa.transdecoder_dir
 rm ../*.fa*.*
 
 echo "All necessary files written to" $output

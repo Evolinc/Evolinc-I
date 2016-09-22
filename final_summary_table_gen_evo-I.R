@@ -6,7 +6,6 @@ library(splitstackshape)
 library(dplyr)
 library(getopt)
 
-
 args<-commandArgs(TRUE)
 
 #############################################################
@@ -27,8 +26,34 @@ if ( !is.null(ret.opts$help) ) {
   q(status=1);
 }
 
-# No TSS file here
-if(is.null(ret.opts$tss)) {
+if(is.null(ret.opts$tss) && is.null(ret.opts$overlap)){
+    # All lincRNA's
+    fastaFile <- readDNAStringSet(ret.opts$lincRNA)
+    lincRNA_ID = names(fastaFile)
+    sequence = paste(fastaFile)
+    size = width(fastaFile)
+    df <- data.frame(lincRNA_ID, size)
+    # Bed file
+    bed_File <- read.table(ret.opts$lincRNAbed)
+    t <- paste0(bed_File$V14 , ".gene=", bed_File$V11)
+    bind <- as.data.frame(cbind(t,bed_File$V17))
+    bind$t <- as.character(bind$t)
+    bind$V2 <- as.character(bind$V2)
+    bedfinal <- as.data.frame(bind %>% group_by(t) %>% summarise(V2 = max(V2)))
+    # non present columns
+    cols <- ncol(bedfinal)
+    cols <- cols + 1 
+    bedfinal[,cols] <- NA
+    cols <- cols + 1 
+    bedfinal[,cols] <- NA
+    cols <- cols + 1 
+    bedfinal[,cols] <- NA
+    merge1 <- merge(df, bedfinal, by=1)
+    merge1 <- merge1[,c(1,2,4:6,3)]
+    names(merge1) <- c("lincRNA_ID", "Size(bp)", "Overlapping_known_lincRNA", "gene_ID", "Has_TSS_data", "Number_of_exons") 
+    write.table(merge1, file = "final_Summary_table.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
+
+} else if(is.null(ret.opts$tss)){
     # All lincRNA's
     fastaFile <- readDNAStringSet(ret.opts$lincRNA)
     lincRNA_ID = names(fastaFile)
@@ -139,7 +164,7 @@ if(is.null(ret.opts$tss)) {
     merge2 <- merge2[,c(1:2,5:6,3:4)]
     # Writing data
     write.table(merge2, file = "final_Summary_table.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
-
+  
 # All present
 } else {
     # All lincRNA's
