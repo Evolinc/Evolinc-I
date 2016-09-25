@@ -6,7 +6,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -c cuffcompare -g genome -r gff -o output -n threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
+      echo "Usage : sh $0 -c cuffcompare -g genome -u user_gff -r gff -o output -n threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
       echo ""
 
 cat <<'EOF'
@@ -14,6 +14,8 @@ cat <<'EOF'
   -c </path/to/cuffcompare output file>
 
   -g </path/to/reference genome file>
+
+  -u </path/to/user reference annotation file>
 
   -r </path/to/reference annotation file>
 
@@ -33,7 +35,7 @@ EOF
     exit 0
 }
 
-while getopts ":b:c:g:hr:t:x:o:n:" opt; do
+while getopts ":b:c:g:hr:t:x:o:n:u:" opt; do
   case $opt in
     b)
      blastfile=$OPTARG
@@ -47,6 +49,9 @@ while getopts ":b:c:g:hr:t:x:o:n:" opt; do
       ;;    
     g)
      referencegenome=$OPTARG
+      ;;
+    u)
+     user_referencegff=$OPTARG
       ;;
     r)
      referencegff=$OPTARG
@@ -180,7 +185,12 @@ echo "Elapsed time for Step 2 is" $ELAPSED_TIME_2 "seconds" >> ../$output/elapse
 
 # STEP 3:
 START_TIME_3=$SECONDS
-intersectBed -a lincRNA.prefilter.bed -b ../$referencegff -u -s > SOT.genes.all.bed
+if [ ! -z $user_referencegff ];
+then
+    intersectBed -a lincRNA.prefilter.bed -b ../$user_referencegff -u -s > SOT.genes.all.bed
+else   
+    intersectBed -a lincRNA.prefilter.bed -b $referencegff -u -s > SOT.genes.all.bed
+fi
 
 # Get the IDs of the overlapping exons.
 cut -f 10 SOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.ids.txt
@@ -204,7 +214,13 @@ echo "Elapsed time for Step 3 is" $ELAPSED_TIME_3 "seconds" >> ../$output/elapse
 # STEP 4:
 START_TIME_4=$SECONDS
 # Identify transcripts that are overlapping in the opposite direction (AOT)
-intersectBed -a lincRNA.noSOT.bed -b ../$referencegff -u -S > AOT.genes.all.bed
+if [ ! -z $user_referencegff ];
+then
+    intersectBed -a lincRNA.noSOT.bed -b ../$user_referencegff -u -S > AOT.genes.all.bed
+else
+    intersectBed -a lincRNA.noSOT.bed -b $referencegff -u -S > AOT.genes.all.bed
+
+fi
 
 # Make a list from the above file-These are the exons that overlapped
 cut -f 10 AOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > AOT.ids.txt
@@ -260,7 +276,6 @@ cat lincRNA.txt | sort -n | cut -f 2 | awk 'NR == 1 { max=$1; min=$1; sum=0 }
 # Identify the number of unique lincRNAs in bed file, and update the demographics file
 uniquelincRNAcount=$(cut -f 10 lincRNAs.bed | awk -F " " '{print $2}'| sort | uniq | grep -c "XLOC")
 echo "Total number of unique lincRNAs = $uniquelincRNAcount" >> lincRNA_demographics.txt
-
 
 # Demographics for SOT lncRNAs
 python /evolinc_docker/seq_length.py SOT.fa > SOT.lincRNA.txt
