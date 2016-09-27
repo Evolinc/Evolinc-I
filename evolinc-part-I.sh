@@ -258,8 +258,9 @@ echo "Elapsed time for Step 5 is" $ELAPSED_TIME_5 "seconds" >> ../$output/elapse
 
 # STEP 6: 
 START_TIME_6=$SECONDS
-# Update the cufflinks gtf file
-python /evolinc_docker/update_gtf.py lincRNAs.fa ../$comparefile lincRNA.updated.gtf
+# Update the cufflinks gtf file, only has known genes plus lincRNAs
+grep -v 'class_code "u"' ../$comparefile | grep -v 'class_code "x"' | grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >modified_lincRNA.gtf
+python /evolinc_docker/update_gtf.py lincRNAs.fa modified_lincRNA.gtf lincRNA.updated.gtf
 
 ELAPSED_TIME_6=$(($SECONDS - $START_TIME_6))
 echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
