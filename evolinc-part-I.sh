@@ -221,13 +221,15 @@ echo "Elapsed time for Step 2 is" $ELAPSED_TIME_2 "seconds" >> ../$output/elapse
 START_TIME_3=$SECONDS
 if [ ! -z $user_referencegff ];
 then
-    intersectBed -a lincRNA.prefilter.bed -b ../$user_referencegff -u -s > SOT.lincRNA.genes.all.bed
-else   
-    intersectBed -a lincRNA.prefilter.bed -b $referencegff -u -s > SOT.lincRNA.genes.all.bed
+    sed 's~^~>~g' ../$user_referencegff | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > user_referencegff.gff
+    intersectBed -a lincRNA.prefilter.bed -b user_referencegff.gff -u -s > SOT.genes.all.bed
+else
+    sed 's~^~>~g' $referencegff | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > referencegff.gff
+    intersectBed -a lincRNA.prefilter.bed -b referencegff.gff -u -s > SOT.genes.all.bed
 fi
 
 # Get the IDs of the overlapping exons.
-cut -f 10 SOT.lincRNA.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.lincRNA.ids.txt
+cut -f 10 SOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.lincRNA.ids.txt
 
 #create a bed file with all OTs removed
 grep -vFf SOT.lincRNA.ids.txt lincRNA.prefilter.bed > lincRNA.noSOT.bed
@@ -251,10 +253,11 @@ START_TIME_4=$SECONDS
 # Identify transcripts that are overlapping in the opposite direction (AOT)
 if [ ! -z $user_referencegff ];
 then
-    intersectBed -a lincRNA.noSOT.bed -b ../$user_referencegff -u -S > AOT.lincRNA.genes.all.bed
+    sed 's~^~>~g' ../$user_referencegff | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > user_referencegff.gff
+    intersectBed -a lincRNA.noSOT.bed -b user_referencegff.gff -u -S > AOT.lincRNA.genes.all.bed
 else
-    intersectBed -a lincRNA.noSOT.bed -b $referencegff -u -S > AOT.lincRNA.genes.all.bed
-
+    sed 's~^~>~g' $referencegff | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > referencegff.gff
+    intersectBed -a lincRNA.noSOT.bed -b referencegff.gff -u -S > AOT.lincRNA.genes.all.bed
 fi
 
 # Make a list from the above file-These are the exons that overlapped
@@ -315,7 +318,6 @@ then
     intersectBed -a lncRNA.noSOT.bed -b ../$user_referencegff -u -S > AOT.lncRNA.genes.all.bed
 else
     intersectBed -a lncRNA.noSOT.bed -b $referencegff -u -S > AOT.lncRNA.genes.all.bed
-
 fi
 
 # Make a list from the above file-These are the exons that overlapped
