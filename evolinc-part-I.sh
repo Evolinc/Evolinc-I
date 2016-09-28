@@ -90,7 +90,7 @@ mkdir $output
 # STEP 1:
 START_TIME_1=$SECONDS
 # Extracting classcode u transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts and modify the header to generate genes
-grep '"u"' $comparefile | gffread -w transcripts.u.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa transcripts.u.filter.fa && sed 's/ .*//' transcripts.u.filter.fa | sed -ne 's/>//p' > transcripts.u.filter.fa.genes
+grep '"u"' $comparefile | gffread -w transcripts.u.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa transcripts.u.filter.fa && sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
 grep '"x"' $comparefile | gffread -w transcripts.x.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
 grep '"s"' $comparefile | gffread -w transcripts.s.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
 grep '"o"' $comparefile | gffread -w transcripts.o.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
@@ -98,14 +98,14 @@ grep '"e"' $comparefile | gffread -w transcripts.e.fa -g $referencegenome - && p
 grep '"i"' $comparefile | gffread -w transcripts.i.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
 
 # Concatenate all the genes id's from filtered files
-cat transcripts.*.filter.fa.genes > transcripts.all.filter.genes
+cat transcripts.*.filter.fa.genes > transcripts.all.overlapping.filter.genes
 
 # Make new directory
 mkdir transcripts_u_filter.fa.transdecoder_dir
 
 # Move the transcript files to this directory transcripts_u_filter.fa.transdecoder_dir
 mv transcripts.* transcripts_u_filter.fa.transdecoder_dir/
-
+mv putative_intergenic.* transcripts_u_filter.fa.transdecoder_dir/
 # Change the directory
 cd transcripts_u_filter.fa.transdecoder_dir
 
@@ -127,30 +127,60 @@ cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 | uniq > longest_orfs_cat.
 cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest_orfs_cat.cds.pep.blastp.genes
 
 # Remove these protein coding genes from the filter file
-grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts.all.filter.genes > transcripts.all.filter.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
-sed 's/^/>/' transcripts.all.filter.not.genes > temp && mv temp transcripts.all.filter.not.genes # changed name here 
+grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts.all.overlapping.filter.genes > transcripts.all.overlapping.filter.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
+sed 's/^/>/' transcripts.all.overlapping.filter.not.genes > temp && mv temp transcripts.all.overlapping.filter.not.genes # changed name here 
 
 # Extract fasta file
-cat transcripts.*.filter.fa > transcripts.all.filter.fa
-python /evolinc_docker/extract_sequences.py transcripts.all.filter.not.genes transcripts.all.filter.fa transcripts.all.filter.not.genes.fa 
-sed 's/ /./' transcripts.all.filter.not.genes.fa > temp && mv temp transcripts.all.filter.not.genes.fa
+cat transcripts.*.filter.fa > transcripts.all.overlapping.filter.fa
+python /evolinc_docker/extract_sequences.py transcripts.all.overlapping.filter.not.genes transcripts.all.overlapping.filter.fa transcripts.all.overlapping.filter.not.genes.fa 
+sed 's/ /./' transcripts.all.overlapping.filter.not.genes.fa > temp && mv temp transcripts.all.overlapping.filter.not.genes.fa
 
-# Blast the fasta file to TE RNA db
+#clean up the folder for the next round of transdecoder
+rm longest_orf*
+
+###repeat transdecoder on just the novel transcripts
+
+for file in putative_intergenic.genes.fa; do TransDecoder.LongOrfs -t $file; done
+
+# This groups all the longest_orfs.cds and all the longest_orf.pep files into one, in the transdecoder file.
+find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat.cds 
+find . -type f -name longest_orfs.pep -exec cat '{}' \; | cat > longest_orfs_cat.pep 
+
+# Blasting the transcripts to uniprot db
+blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads $threads > longest_orfs_cat.pep.blastp
+
+# Genes in the protein coding genes
+sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
+
+cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 | uniq > longest_orfs_cat.pep.blastp.genes
+
+cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest_orfs_cat.cds.pep.blastp.genes
+
+# Remove these protein coding genes from the filter file
+grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes putative_intergenic.genes > putative_intergenic.genes.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
+sed 's/^/>/' putative_intergenic.genes.not.genes > temp && mv temp putative_intergenic.genes.not.genes # changed name here 
+
+# Extract fasta file
+python /evolinc_docker/extract_sequences.py putative_intergenic.genes.not.genes putative_intergenic.genes.fa putative_intergenic.genes.not.genes.fa 
+sed 's/ /./' putative_intergenic.genes.not.genes.fa > temp && mv temp putative_intergenic.genes.not.genes.fa
+
+
+# Blast the putative intergenic lincRNA fasta file to TE RNA db
 if [ ! -z $blastfile ]; then
      makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
-     blastn -query transcripts.all.filter.not.genes.fa -db ../$blastfile.blast.out -out transcripts.all.filter.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
+     blastn -query putative_intergenic.genes.not.genes.fa -db ../$blastfile.blast.out -out putative_intergenic.genes.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
 else
-    touch transcripts.all.filter.not.genes.fa.blast.out
+    touch putative_intergenic.genes.not.genes.fa.blast.out
 fi
 
 # Filter the output to select the best transcript based on e-value and bit-score
-python /evolinc_docker/filter_sequences.py transcripts.all.filter.not.genes.fa.blast.out transcripts.all.filter.not.genes.fa.blast.out.filtered
+python /evolinc_docker/filter_sequences.py putative_intergenic.genes.not.genes.fa.blast.out putative_intergenic.genes.not.genes.fa.blast.out.filtered
 
 # Modify the header in the fasta file to extract header only
-grep ">" transcripts.all.filter.not.genes.fa | sed 's/>//' > transcripts.all.filter.not.genes_only
+grep ">" putative_intergenic.genes.not.genes.fa | sed 's/>//' > putative_intergenic.genes.not.genes_only
 
 # Now remove the blast hits from the fasta file
-python /evolinc_docker/fasta_remove.py transcripts.all.filter.not.genes.fa.blast.out.filtered transcripts.all.filter.not.genes_only lincRNA.genes
+python /evolinc_docker/fasta_remove.py putative_intergenic.genes.not.genes.fa.blast.out.filtered putative_intergenic.genes.not.genes_only lincRNA.genes
 
 # Modify the fasta header to include ">", generating a new file so as to keep the lincRNA.genes file intact for later use.
 sed 's/^/>/' lincRNA.genes > lincRNA.genes.modified
@@ -164,7 +194,7 @@ python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts
 #Extract TE-containing sequences for user
 python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt transcripts.all.filter.not.genes.fa TE_containing_transcripts.fa
 
-#Create a bed file of TE-containing transcripts for user
+#Create a bed file of TE-containing INTERGENIC transcripts for user
 cut -f 1 -d "." transcripts.all.filter.not.genes.fa.blast.out.filtered > TE_containing_transcript_list_transcript_ID_only.txt
 grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../$comparefile > TE_containing_transcripts.gtf
 gff2bed < TE_containing_transcripts.gtf > TE_containing_transcripts.bed
@@ -187,27 +217,28 @@ echo "Elapsed time for Step 2 is" $ELAPSED_TIME_2 "seconds" >> ../$output/elapse
 START_TIME_3=$SECONDS
 if [ ! -z $user_referencegff ];
 then
-    intersectBed -a lincRNA.prefilter.bed -b ../$user_referencegff -u -s > SOT.genes.all.bed
+    intersectBed -a lincRNA.prefilter.bed -b ../$user_referencegff -u -s > SOT.lincRNA.genes.all.bed
 else   
-    intersectBed -a lincRNA.prefilter.bed -b $referencegff -u -s > SOT.genes.all.bed
+    intersectBed -a lincRNA.prefilter.bed -b $referencegff -u -s > SOT.lincRNA.genes.all.bed
 fi
 
 # Get the IDs of the overlapping exons.
-cut -f 10 SOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.ids.txt
+cut -f 10 SOT.lincRNA.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.lincRNA.ids.txt
 
 #create a bed file with all OTs removed
-grep -vFf SOT.ids.txt lincRNA.prefilter.bed > lincRNA.noSOT.bed
+grep -vFf SOT.lincRNA.ids.txt lincRNA.prefilter.bed > lincRNA.noSOT.bed
 
 # Create a bed file for overlapping exons from the prefilter file
-grep -Ff SOT.ids.txt lincRNA.prefilter.bed > SOT.all.bed
+grep -Ff SOT.lincRNA.ids.txt lincRNA.prefilter.bed > SOT.lincRNA.all.bed
 
 #Create a list of all OT transcripts, including all exons related (part of the same transcript) as the exons found to be overlapping genes.
-cut -f 10 SOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.all.txt
+cut -f 10 SOT.lincRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.lincRNA.all.txt
 
 # Move SOT to a new file
-grep -A 1 -f SOT.all.txt lincRNA.genes.fa > SOT.fa
+grep -A 1 -f SOT.lincRNA.all.txt lincRNA.genes.fa > SOT.lincRNA.fa
 #Clean up FASTA file
-sed -i 's~--~~g' SOT.fa # still has an extra new line
+sed -i 's~--~~g' SOT.lincRNA.fa # still has an extra new line
+
 ELAPSED_TIME_3=$(($SECONDS - $START_TIME_3))
 echo "Elapsed time for Step 3 is" $ELAPSED_TIME_3 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
@@ -216,31 +247,97 @@ START_TIME_4=$SECONDS
 # Identify transcripts that are overlapping in the opposite direction (AOT)
 if [ ! -z $user_referencegff ];
 then
-    intersectBed -a lincRNA.noSOT.bed -b ../$user_referencegff -u -S > AOT.genes.all.bed
+    intersectBed -a lincRNA.noSOT.bed -b ../$user_referencegff -u -S > AOT.lincRNA.genes.all.bed
 else
-    intersectBed -a lincRNA.noSOT.bed -b $referencegff -u -S > AOT.genes.all.bed
+    intersectBed -a lincRNA.noSOT.bed -b $referencegff -u -S > AOT.lincRNA.genes.all.bed
 
 fi
 
 # Make a list from the above file-These are the exons that overlapped
-cut -f 10 AOT.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > AOT.ids.txt
+cut -f 10 AOT.lincRNA.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > AOT.lincRNA.ids.txt
 
 # Generate a bed file of the entire transcript of exons that were found to be AOT
-grep -Ff AOT.ids.txt lincRNA.noSOT.bed > AOT.all.bed
+grep -Ff AOT.lincRNA.ids.txt lincRNA.noSOT.bed > AOT.lincRNA.all.bed
 
 #Create a list of all AOT transcripts
-cut -f 10 AOT.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > AOT.all.txt
+cut -f 10 AOT.lincRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > AOT.lincRNA.all.txt
 
 #create a bed file with all AOT and SOT removed
-grep -vFf AOT.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
+grep -vFf AOT.lincRNA.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
-grep -A 1 -f AOT.all.txt lincRNA.genes.fa > AOT.fa
+grep -A 1 -f AOT.lincRNA.all.txt lincRNA.genes.fa > AOT.lincRNA.fa
 #Clean up FASTA file
-sed -i 's~--~~g' AOT.fa # still has an extra new line
+sed -i 's~--~~g' AOT.lincRNA.fa # still has an extra new line
 
 ELAPSED_TIME_4=$(($SECONDS - $START_TIME_4))
 echo "Elapsed time for Step 4 is" $ELAPSED_TIME_4 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
+
+###repeating Steps 2-4 on the overlapping transcripts to sort them into SOT or AOT
+
+#Extract lncRNA candidates from original cuffmerge GTF file, using unmodified lncRNA.genes file
+awk -F"." '{print $1}' transcripts.all.overlapping.filter.not.genes > lncRNA.genes.id
+grep -F -f lncRNA.genes.id ../$comparefile > filtered.lncRNA.gtf
+gff2bed < filtered.lncRNA.gtf > lncRNA.prefilter.bed
+awk 'BEGIN {OFS=FS="\t"} {gsub(/\./,"+",$6)}1' lncRNA.prefilter.bed > temp && mv temp lncRNA.prefilter.bed
+
+if [ ! -z $user_referencegff ];
+then
+    intersectBed -a lncRNA.prefilter.bed -b ../$user_referencegff -u -s > SOT.lncRNA.genes.all.bed
+else   
+    intersectBed -a lncRNA.prefilter.bed -b $referencegff -u -s > SOT.lncRNA.genes.all.bed
+fi
+
+# Get the IDs of the overlapping exons.
+cut -f 10 SOT.lncRNA.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > SOT.lncRNA.ids.txt
+
+#create a bed file with all OTs removed
+grep -vFf SOT.lncRNA.ids.txt lncRNA.prefilter.bed > lncRNA.noSOT.bed
+
+# Create a bed file for overlapping exons from the prefilter file
+grep -Ff SOT.lncRNA.ids.txt lncRNA.prefilter.bed > SOT.lncRNA.all.bed
+
+#Create a list of all OT transcripts, including all exons related (part of the same transcript) as the exons found to be overlapping genes.
+cut -f 10 SOT.lncRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.lncRNA.all.txt
+
+# Move SOT to a new file
+grep -A 1 -f SOT.lncRNA.all.txt transcripts.all.overlapping.filter.not.genes.fa > SOT.lncRNA.fa
+#Clean up FASTA file
+sed -i 's~--~~g' SOT.lncRNA.fa # still has an extra new line
+
+# Identify transcripts that are overlapping in the opposite direction (AOT)
+if [ ! -z $user_referencegff ];
+then
+    intersectBed -a lncRNA.noSOT.bed -b ../$user_referencegff -u -S > AOT.lncRNA.genes.all.bed
+else
+    intersectBed -a lncRNA.noSOT.bed -b $referencegff -u -S > AOT.lncRNA.genes.all.bed
+
+fi
+
+# Make a list from the above file-These are the exons that overlapped
+cut -f 10 AOT.lncRNA.genes.all.bed | awk -F " " '{print $2}'| sort | uniq | sed 's~;~~g' > AOT.lncRNA.ids.txt
+
+# Generate a bed file of the entire transcript of exons that were found to be AOT
+grep -Ff AOT.lncRNA.ids.txt lncRNA.noSOT.bed > AOT.lncRNA.all.bed
+
+#Create a list of all AOT transcripts
+cut -f 10 AOT.lncRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > AOT.lncRNA.all.txt
+
+#create a bed file with all AOT and SOT removed
+grep -vFf AOT.lncRNA.ids.txt lncRNA.noSOT.bed > lncRNA.postfilter.bed
+
+# Move NATs to a new file
+grep -A 1 -f AOT.lncRNA.all.txt transcripts.all.overlapping.filter.not.genes.fa > AOT.lncRNA.fa
+#Clean up FASTA file
+sed -i 's~--~~g' AOT.lncRNA.fa # still has an extra new line
+###End of Step 2-4 repeat
+
+#Combine SOT and AOT fasta and bed files into one set of each AOT and SOT for downstream demographics step
+
+cat SOT.lncRNA.fa SOT.lincRNA.fa > SOT.fa
+cat AOT.lncRNA.fa AOT lncRNA.fa > AOT.fa
+cat SOT.lncRNA.all.bed SOT.lincRNA.all.bed > SOT.all.bed
+cat AOT.lncRNA.all.bed AOT.lincRNA.all.bed > AOT.all.bed
 
 # STEP 5: Generating final lincRNAs.bed file and the final set of lincRNA sequences
 START_TIME_5=$SECONDS
