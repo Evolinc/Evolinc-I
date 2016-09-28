@@ -478,7 +478,7 @@ ELAPSED_TIME_O1=$(($SECONDS - $START_TIME_O1))
 echo "Elapsed time for Optional Step(s) is" $ELAPSED_TIME_O1 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
 
 # # remove all the other files
-#rm -r ../transcripts_u_filter.fa.transdecoder_dir
+rm -r ../transcripts_u_filter.fa.transdecoder_dir
 rm ../*.fa*.*
 
 echo "All necessary files written to" $output
