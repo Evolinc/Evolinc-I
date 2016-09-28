@@ -90,12 +90,16 @@ mkdir $output
 # STEP 1:
 START_TIME_1=$SECONDS
 # Extracting classcode u transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts and modify the header to generate genes
-grep '"u"' $comparefile | gffread -w transcripts.u.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa transcripts.u.filter.fa && sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
-grep '"x"' $comparefile | gffread -w transcripts.x.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
-grep '"s"' $comparefile | gffread -w transcripts.s.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
-grep '"o"' $comparefile | gffread -w transcripts.o.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
-grep '"e"' $comparefile | gffread -w transcripts.e.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
-grep '"i"' $comparefile | gffread -w transcripts.i.fa -g $referencegenome - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
+sed 's~^~>~g' $comparefile | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > comparefile.gtf
+sed 's~^>0*~>~g' $referencegenome | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' > referencegenome.fa
+
+grep '"u"' comparefile.gtf | gffread -w transcripts.u.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa putative_intergenic.genes.fa && sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
+grep '"x"' comparefile.gtf | gffread -w transcripts.x.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
+grep '"s"' comparefile.gtf | gffread -w transcripts.s.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
+grep '"o"' comparefile.gtf | gffread -w transcripts.o.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
+grep '"e"' comparefile.gtf | gffread -w transcripts.e.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
+grep '"i"' comparefile.gtf | gffread -w transcripts.i.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
+rm referencegenome.fa
 
 # Concatenate all the genes id's from filtered files
 cat transcripts.*.filter.fa.genes > transcripts.all.overlapping.filter.genes
@@ -186,7 +190,7 @@ python /evolinc_docker/fasta_remove.py putative_intergenic.genes.not.genes.fa.bl
 sed 's/^/>/' lincRNA.genes > lincRNA.genes.modified
 
 #Modify the TE-containing transcript list to include ">"
-sed 's/^/>/' transcripts.all.filter.not.genes.fa.blast.out.filtered > List_of_TE_containing_transcripts.txt
+sed 's/^/>/' putative_intergenic.genes.not.genes.fa.blast.out > List_of_TE_containing_transcripts.txt
 
 # Extract the sequences
 python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts.all.filter.not.genes.fa lincRNA.genes.fa
@@ -195,8 +199,8 @@ python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts
 python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt transcripts.all.filter.not.genes.fa TE_containing_transcripts.fa
 
 #Create a bed file of TE-containing INTERGENIC transcripts for user
-cut -f 1 -d "." transcripts.all.filter.not.genes.fa.blast.out.filtered > TE_containing_transcript_list_transcript_ID_only.txt
-grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../$comparefile > TE_containing_transcripts.gtf
+cut -f 1 -d "." putative_intergenic.genes.not.genes.fa.blast.out > TE_containing_transcript_list_transcript_ID_only.txt
+grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../comparefile.gtf > TE_containing_transcripts.gtf
 gff2bed < TE_containing_transcripts.gtf > TE_containing_transcripts.bed
 
 ELAPSED_TIME_1=$(($SECONDS - $START_TIME_1))
@@ -206,7 +210,7 @@ echo "Elapsed time for step 1 is" $ELAPSED_TIME_1 "seconds" > ../$output/elapsed
 START_TIME_2=$SECONDS
 #Extract lincRNA candidates from original cuffmerge GTF file, using unmodified lincRNA.genes file
 awk -F"." '{print $1}' lincRNA.genes > lincRNA.genes.id
-grep -F -f lincRNA.genes.id ../$comparefile > filtered.lincRNA.gtf
+grep -F -f lincRNA.genes.id ../comparefile.gtf > filtered.lincRNA.gtf
 gff2bed < filtered.lincRNA.gtf > lincRNA.prefilter.bed
 awk 'BEGIN {OFS=FS="\t"} {gsub(/\./,"+",$6)}1' lincRNA.prefilter.bed > temp && mv temp lincRNA.prefilter.bed
 
@@ -277,7 +281,7 @@ echo "Elapsed time for Step 4 is" $ELAPSED_TIME_4 "seconds" >> ../$output/elapse
 
 #Extract lncRNA candidates from original cuffmerge GTF file, using unmodified lncRNA.genes file
 awk -F"." '{print $1}' transcripts.all.overlapping.filter.not.genes > lncRNA.genes.id
-grep -F -f lncRNA.genes.id ../$comparefile > filtered.lncRNA.gtf
+grep -F -f lncRNA.genes.id ../comparefile.gtf > filtered.lncRNA.gtf
 gff2bed < filtered.lncRNA.gtf > lncRNA.prefilter.bed
 awk 'BEGIN {OFS=FS="\t"} {gsub(/\./,"+",$6)}1' lncRNA.prefilter.bed > temp && mv temp lncRNA.prefilter.bed
 
@@ -356,7 +360,8 @@ echo "Elapsed time for Step 5 is" $ELAPSED_TIME_5 "seconds" >> ../$output/elapse
 # STEP 6: 
 START_TIME_6=$SECONDS
 # Update the cufflinks gtf file, only has known genes plus lincRNAs
-grep -v 'class_code "u"' ../$comparefile | grep -v 'class_code "x"' | grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >modified_lincRNA.gtf
+grep -v 'class_code "u"' ../comparefile.gtf | grep -v 'class_code "x"' | grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >modified_lincRNA.gtf
+rm ../comparefile.gtf
 python /evolinc_docker/update_gtf.py lincRNAs.fa modified_lincRNA.gtf lincRNA.updated.gtf
 
 ELAPSED_TIME_6=$(($SECONDS - $START_TIME_6))
