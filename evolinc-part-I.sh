@@ -193,10 +193,10 @@ sed 's/^/>/' lincRNA.genes > lincRNA.genes.modified
 sed 's/^/>/' putative_intergenic.genes.not.genes.fa.blast.out > List_of_TE_containing_transcripts.txt
 
 # Extract the sequences
-python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified transcripts.all.filter.not.genes.fa lincRNA.genes.fa
+python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified putative_intergenic.genes.not.genes.fa lincRNA.genes.fa
 
 #Extract TE-containing sequences for user
-python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt transcripts.all.filter.not.genes.fa TE_containing_transcripts.fa
+python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt putative_intergenic.genes.not.genes.fa TE_containing_transcripts.fa
 
 #Create a bed file of TE-containing INTERGENIC transcripts for user
 cut -f 1 -d "." putative_intergenic.genes.not.genes.fa.blast.out > TE_containing_transcript_list_transcript_ID_only.txt
