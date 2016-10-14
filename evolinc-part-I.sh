@@ -341,7 +341,7 @@ sed -i 's~--~~g' AOT.lncRNA.fa # still has an extra new line
 #Combine SOT and AOT fasta and bed files into one set of each AOT and SOT for downstream demographics step
 
 cat SOT.lncRNA.fa SOT.lincRNA.fa > SOT.fa
-cat AOT.lncRNA.fa AOT lncRNA.fa > AOT.fa
+cat AOT.lncRNA.fa AOT.lincRNA.fa > AOT.fa
 cat SOT.lncRNA.all.bed SOT.lincRNA.all.bed > SOT.all.bed
 cat AOT.lncRNA.all.bed AOT.lincRNA.all.bed > AOT.all.bed
 
