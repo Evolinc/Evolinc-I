@@ -423,13 +423,14 @@ START_TIME_O1=$SECONDS
 
 if [ ! -z $cagefile ] && [ ! -z $knownlinc ]; 
 then
-      
-     gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
+     sed 's~^~>~g' ../$cagefile | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > cage_file &&
+     gff2bed < cage_file > AnnotatedPEATPeaks.bed &&
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
      closestBed -a lincRNAs.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
      python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
      
-     gff2bed < ../$knownlinc > known_lncRNAs.bed &&
+     sed 's~^~>~g' ../$knownlinc | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > knownlinc_file &&
+     gff2bed < knownlinc_file > known_lncRNAs.bed &&
      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
      intersectBed -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
      intersectBed -wb -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
@@ -446,7 +447,8 @@ then
 
 elif [ ! -z $cagefile ]; 
 then
-     gff2bed < ../$cagefile > AnnotatedPEATPeaks.bed &&
+     sed 's~^~>~g' ../$cagefile | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > cage_file &&
+     gff2bed < cage_file > AnnotatedPEATPeaks.bed &&
      sortBed -i AnnotatedPEATPeaks.bed > AnnotatedPEATPeaks.sorted.bed &&
      closestBed -a lincRNAs.bed -b AnnotatedPEATPeaks.sorted.bed -s -D a > closest_output.txt && grep 'exon_number "1"' closest_output.txt > closest_output_exon_1_only.txt &&     
      python /evolinc_docker/closet_bed_compare.py closest_output_exon_1_only.txt lincRNAs.fa lincRNAs.with.CAGE.support.annotated.fa &&
@@ -455,7 +457,8 @@ then
 
 elif [ ! -z $knownlinc ]; 
 then
-    gff2bed < ../$knownlinc > known_lncRNAs.bed &&
+     sed 's~^~>~g' ../$knownlinc | sed 's~^>0*~>~g' | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~g' | sed 's~^>~~g' > knownlinc_file &&
+     gff2bed < knownlinc_file > known_lncRNAs.bed &&
      sortBed -i known_lncRNAs.bed > known_lncRNAs.sorted.bed &&
      intersectBed -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output.txt &&
      intersectBed -wb -a lincRNAs.bed -b known_lncRNAs.sorted.bed > intersect_output2.txt &&
