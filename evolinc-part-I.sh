@@ -363,11 +363,13 @@ echo "Elapsed time for Step 5 is" $ELAPSED_TIME_5 "seconds" >> ../$output/elapse
 START_TIME_6=$SECONDS
 # Update the cufflinks gtf file, only has known genes plus lincRNAs
 #This first step removes all the overlapping and partial transcripts
-grep -v 'class_code "x"' ../comparefile.gtf| grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >part_modified_lincRNA.gtf
+grep -v 'class_code "x"' $comparefile | grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >part_modified_lincRNA.gtf
 #This modifies all entries in the part_modifified.gtf file so that the second column contains lincRNA instead of Cufflinks
 python /evolinc_docker/update_gtf.py lincRNAs.fa part_modified_lincRNA.gtf modified_lincRNA.updated.gtf
+#Clean up quotation marks left over from update_gtf.py
+sed 's~""~"~g' modified_lincRNA.updated.gtf | sed 's~"gene_id~gene_id~g' | sed 's~;"~;~g' >modified_lincRNA.updated_2.gtf
 #Needed to keep "u" class codes in the annotation file until we could modify their IDs. Once we did this (above) we can now remove lines which contain BOTH cufflinks and "u"
-grep -v -e 'Cufflinks.*class_code "u"' modified_lincRNA.updated.gtf >lincRNA.updated.gtf
+grep -v -e 'Cufflinks.*class_code "u"' modified_lincRNA.updated_2.gtf >lincRNA.updated.gtf
 rm ../comparefile.gtf
 ELAPSED_TIME_6=$(($SECONDS - $START_TIME_6))
 echo "Elapsed time for Step 6 is" $ELAPSED_TIME_6 "seconds" >> ../$output/elapsed_time-evolinc-i.txt
