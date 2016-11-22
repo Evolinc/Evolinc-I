@@ -363,7 +363,7 @@ echo "Elapsed time for Step 5 is" $ELAPSED_TIME_5 "seconds" >> ../$output/elapse
 START_TIME_6=$SECONDS
 # Update the cufflinks gtf file, only has known genes plus lincRNAs
 #This first step removes all the overlapping and partial transcripts
-grep -v 'class_code "x"' $comparefile | grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >part_modified_lincRNA.gtf
+grep -v 'class_code "x"' ../comparefile.gtf | grep -v 'class_code "s"' | grep -v 'class_code "o"' | grep -v 'class_code "e"' | grep -v 'class_code "i"' >part_modified_lincRNA.gtf
 #This modifies all entries in the part_modifified.gtf file so that the second column contains lincRNA instead of Cufflinks
 python /evolinc_docker/update_gtf.py lincRNAs.fa part_modified_lincRNA.gtf modified_lincRNA.updated.gtf
 #Clean up quotation marks left over from update_gtf.py
