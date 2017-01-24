@@ -284,6 +284,7 @@ echo "Elapsed time for Step 4 is" $ELAPSED_TIME_4 "seconds" >> ../$output/elapse
 
 #Extract lncRNA candidates from original cuffmerge GTF file, using unmodified lncRNA.genes file
 awk -F"." '{print $1}' transcripts.all.overlapping.filter.not.genes > lncRNA.genes.id
+sed -i 's~>~~g' lncRNA.genes.id
 grep -F -f lncRNA.genes.id ../comparefile.gtf > filtered.lncRNA.gtf
 gff2bed < filtered.lncRNA.gtf > lncRNA.prefilter.bed
 awk 'BEGIN {OFS=FS="\t"} {gsub(/\./,"+",$6)}1' lncRNA.prefilter.bed > temp && mv temp lncRNA.prefilter.bed
