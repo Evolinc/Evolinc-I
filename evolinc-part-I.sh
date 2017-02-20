@@ -210,7 +210,7 @@ echo "Elapsed time for step 1 is" $ELAPSED_TIME_1 "seconds" > ../$output/elapsed
 START_TIME_2=$SECONDS
 #Extract lincRNA candidates from original cuffmerge GTF file, using unmodified lincRNA.genes file
 awk -F"." '{print $1}' lincRNA.genes > lincRNA.genes.id
-sed -i 's~>~~g' lncRNA.genes.id
+sed -i 's~>~~g' lincRNA.genes.id
 grep -F -f lincRNA.genes.id ../comparefile.gtf > filtered.lincRNA.gtf
 gff2bed < filtered.lincRNA.gtf > lincRNA.prefilter.bed
 awk 'BEGIN {OFS=FS="\t"} {gsub(/\./,"+",$6)}1' lincRNA.prefilter.bed > temp && mv temp lincRNA.prefilter.bed
