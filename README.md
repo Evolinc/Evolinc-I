@@ -18,9 +18,11 @@ Optional input data
 
 Since there are several dependencies (can be seen in Dockerfile) to Evolinc-I to make it run on your linux or MAC OS, we highly recommend to use Docker image for [Evolinc-I](https://hub.docker.com/r/cyverse/evolinc-i/) or use the [Dockerfile](https://hub.docker.com/r/cyverse/evolinc-i/~/dockerfile/) to build an image and then use the built image for running Evolinc-I
 
-```sudo docker pull cyverse/evolinc-i:1.0```
+```
+docker pull cyverse/evolinc-i:1.0
 
-```sudo docker run --rm -v $(pwd):/working-dir -w /working-dir cyverse/evolinc-i:1.0 -c Sample_cuffcompare_out.gtf -g TAIR10_chr.fasta -r TAIR10_genes.gff -o test_out_new_no_overlap -n 4```
+docker run --rm -v $(pwd):/working-dir -w /working-dir cyverse/evolinc-i:1.0 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out_new_no_overlap -n 4
+```
 
 ### Using CyVerse Discovery Environment
 
