@@ -86,6 +86,8 @@ START_TIME=$SECONDS
 
 # Creat a directory to move all the output files
 mkdir $output
+grep -v "#" $referencegff |grep -iv "chromosome    " | grep -iv "region    " | grep -iv "scaffold    " > temp && mv temp $referencegff
+grep -v "#" $user_referencegff |grep -iv "chromosome    " | grep -iv "region    " | grep -iv "scaffold    " > temp && mv temp $user_referencegff
 
 # STEP 1:
 START_TIME_1=$SECONDS
@@ -197,7 +199,8 @@ python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified putative_in
 
 #Extract TE-containing sequences for user
 python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt putative_intergenic.genes.not.genes.fa TE_containing_transcripts.fa
-
+sed -i 's/_/./g' TE_containing_transcripts.fa
+sed -i 's/gene=//g' TE_containing_transcripts.fa
 #Create a bed file of TE-containing INTERGENIC transcripts for user
 cut -f 1 -d "." putative_intergenic.genes.not.genes.fa.blast.out > TE_containing_transcript_list_transcript_ID_only.txt
 grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../comparefile.gtf > TE_containing_transcripts.gtf
@@ -490,7 +493,14 @@ echo "Elapsed time for Optional Step(s) is" $ELAPSED_TIME_O1 "seconds" >> ../$ou
 # # remove all the other files
 rm -r ../transcripts_u_filter.fa.transdecoder_dir
 rm ../*.fa*.*
-
+### Clean up fasta headers
+cd ../$output
+sed -i 's/_/./g' lincRNAs.fa
+sed -i 's/gene=//g' lincRNAs.fa
+sed -i 's/_/./g' Other_lncRNA/AOT.fa
+sed -i 's/gene=//g' Other_lncRNA/AOT.fa
+sed -i 's/_/./g' Other_lncRNA/SOT.fa
+sed -i 's/gene=//g' Other_lncRNA/SOT.fa
 echo "All necessary files written to" $output
 echo "Finished Evolinc-part-I!"
 echo `date`
