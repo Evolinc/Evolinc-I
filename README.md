@@ -5,7 +5,9 @@ Evolinc-I minimally requires the following input data
 
 1. A set of assembled and merged transcripts from Cuffmerge or Cuffcompare in gene transfer format (GTF)
 2. A reference genome (FASTA)
-3. A reference genome annotation (GFF)
+3. A reference genome annotation (GFF/GTF/GFF3)
+
+
 
 Optional input data
 
@@ -13,6 +15,7 @@ Optional input data
 2. Known LincRNA (GFF)
 3. Transcription start site coordinates (BED)
  
+
 # Availablility
 ### Using Docker image
 
@@ -32,6 +35,15 @@ docker run --rm -v $(pwd):/working-dir -w /working-dir cyverse/evolinc-i:1.0 -c 
 ### Using CyVerse Discovery Environment
 
 The [Evolinc-I app](https://de.cyverse.org/de/?type=apps&app-id=e980754e-8050-11e6-97c3-008cfa5ae621&system-id=de) is currently integrated in CyVerse’s Discovery Environment (DE) and is free to use by researchers. The complete tutorial is available at this [CyVerse wiki](https://wiki.cyverse.org/wiki/display/TUT/Evolinc+in+the+Discovery+Environment). CyVerse's DE is a free and easy to use GUI that simplifies many aspects of transcriptome assembly. If you do not currently have access to a high performance computing cluster, consider taking advantange of the DE.
+
+
+###Step-by-step walkthroughs###
+
+Step-by-step walkthrough for the DE is available at https://drive.google.com/open?id=0B-ferWixi_V3cmh0QzhJeXRXSE0
+Step-by-step walkthrough for the command-line, with directions on how to change parameters is coming soon.
+Information on how to easily create a Cuffmerge/Cuffcompare input file from 1-many SRA IDs within the DE can be found here:
+https://drive.google.com/open?id=0B-ferWixi_V3NjVpdENLUXhLZjQ
+
 
 # Issues
 If you experience any issues with running Evolinc-I (DE app or source code or Docker image), please open an issue on this github repo.
