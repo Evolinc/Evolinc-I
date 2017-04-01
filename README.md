@@ -36,8 +36,7 @@ docker run --rm -v $(pwd):/working-dir -w /working-dir cyverse/evolinc-i:1.0 -c 
 
 The [Evolinc-I app](https://de.cyverse.org/de/?type=apps&app-id=e980754e-8050-11e6-97c3-008cfa5ae621&system-id=de) is currently integrated in CyVerse’s Discovery Environment (DE) and is free to use by researchers. The complete tutorial is available at this [CyVerse wiki](https://wiki.cyverse.org/wiki/display/TUT/Evolinc+in+the+Discovery+Environment). CyVerse's DE is a free and easy to use GUI that simplifies many aspects of transcriptome assembly. If you do not currently have access to a high performance computing cluster, consider taking advantange of the DE.
 
-
-###Step-by-step walkthroughs###
+#Step-by-step walkthroughs
 
 Step-by-step walkthrough for the DE is available at https://drive.google.com/open?id=0B-ferWixi_V3cmh0QzhJeXRXSE0
 Step-by-step walkthrough for the command-line, with directions on how to change parameters is coming soon.
