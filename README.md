@@ -23,18 +23,20 @@ Since there are several dependencies (these can be seen in [Dockerfile](https://
 
 ```
 # Pull the image from CyVerse Dockerhub
-docker pull cyverse/evolinc-i:1.0
+docker pull evolinc/evolinc-i:1.1
 
 # See the command line help for the image
-docker run cyverse/evolinc-i:1.0 -h 
+docker run evolinc/evolinc-i:1.1 -h 
 
 # Run Evolinc-I on the test data. The sample data can be found in the sample_data folder in this repo
-docker run --rm -v $(pwd):/working-dir -w /working-dir cyverse/evolinc-i:1.0 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
+git clone https://github.com/Evolinc/Evolinc-I.git
+cd Evolinc-I
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.1 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
 ```
 
 ### Using CyVerse Discovery Environment
 
-The [Evolinc-I app](https://de.cyverse.org/de/?type=apps&app-id=e980754e-8050-11e6-97c3-008cfa5ae621&system-id=de) is currently integrated in CyVerse’s Discovery Environment (DE) and is free to use by researchers. The complete tutorial is available at this [CyVerse wiki](https://wiki.cyverse.org/wiki/display/TUT/Evolinc+in+the+Discovery+Environment). CyVerse's DE is a free and easy to use GUI that simplifies many aspects of transcriptome assembly. If you do not currently have access to a high performance computing cluster, consider taking advantange of the DE.
+The [Evolinc-I app](https://de.cyverse.org/de/?type=apps&app-id=e980754e-8050-11e6-97c3-008cfa5ae621&system-id=de) is currently integrated in CyVerse’s Discovery Environment (DE) and is free to use by researchers. The complete tutorial is available at this [CyVerse wiki](https://wiki.cyverse.org/wiki/display/TUT/Evolinc+in+the+Discovery+Environment). CyVerse's DE is a free and easy to use GUI that simplifies many aspects of running bioinformatics analyses. If you do not currently have access to a high performance computing cluster, consider taking advantange of the DE.
 
 #### Step-by-step walkthroughs
 
