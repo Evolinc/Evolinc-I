@@ -1,4 +1,4 @@
-# EVOLINC-I 1.3
+# EVOLINC-I 1.2
 Evolinc-I is a long intergenic noncoding RNA (lincRNA) identification workflow that also facilitates genome browser visualization of identified lincRNAs and downstream differential gene expression analysis. 
 
 Evolinc-I minimally requires the following input data
@@ -23,15 +23,15 @@ Since there are several dependencies (these can be seen in [Dockerfile](https://
 
 ```
 # Pull the image from CyVerse Dockerhub
-docker pull evolinc/evolinc-i:1.3
+docker pull evolinc/evolinc-i:1.2
 
 # See the command line help for the image
-docker run evolinc/evolinc-i:1.3 -h 
+docker run evolinc/evolinc-i:1.2 -h 
 
 # Run Evolinc-I on the test data. The sample data can be found in the sample_data folder in this repo
 git clone https://github.com/Evolinc/Evolinc-I.git
 cd Evolinc-I
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.3 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.2 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
 ```
 
 ### Using CyVerse Discovery Environment
