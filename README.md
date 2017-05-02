@@ -53,4 +53,4 @@ The sources in this [Github](https://github.com/Evolinc/Evolinc-I) repository, a
 # Citing Evolinc-I
 If you have used Evolinc-I manuscript in your research, please cite as below..
 
-*Andrew D. Nelson&ast;, Upendra K. Devisetty&ast;, Kyle Palos, Asher K. Haug-Baltzell, Eric Lyons, Mark A. Beilstein (2017). "Evolinc: a comparative transcriptomics and genomics pipeline for quickly identifying sequence conserved lincRNAs forfunctional analysis". Frontiers in Genetics. 1(10)*
+*Andrew D. Nelson&ast;, Upendra K. Devisetty&ast;, Kyle Palos, Asher K. Haug-Baltzell, Eric Lyons, Mark A. Beilstein (2017). "Evolinc: a comparative transcriptomics and genomics pipeline for quickly identifying sequence conserved lincRNAs for functional analysis". Frontiers in Genetics. 1(10)*
