@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y g++ \
 		curl \
 		python-matplotlib \
 		python-numpy \
-                python-pandas
+        python-pandas
 
 ENV BINPATH /usr/bin
 WORKDIR /evolinc_docker
@@ -62,10 +62,20 @@ RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 RUN python get-pip.py
 RUN pip install biopython
 
+# CPC2
+WORKDIR /evolinc_docker
+RUN wget http://cpc2.cbi.pku.edu.cn/data/CPC2-beta.tar.gz
+RUN gzip -dc CPC2-beta.tar.gz | tar xf -
+WORKDIR CPC2-beta/libs/libsvm
+RUN gzip -dc libsvm-3.22.tar.gz | tar xf -
+WORKDIR libsvm-3.22
+RUN make clean && make
+RUN rm /evolinc_docker/CPC2-beta.tar.gz
+WORKDIR /
+
 # Evolinc wrapper scripts
 ADD *.sh *.py *.R /evolinc_docker/
 RUN chmod +x /evolinc_docker/evolinc-part-I.sh && cp /evolinc_docker/evolinc-part-I.sh $BINPATH
-
 WORKDIR /
 
 # Setting paths to all the softwares
@@ -75,6 +85,8 @@ ENV PATH /evolinc_docker/ncbi-blast-2.4.0+/bin/:$PATH
 ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/samtools-bcftools-htslib-1.0_x64-linux/bin/:$PATH
 ENV PATH /evolinc_docker/bin/:$PATH
+ENV PATH /evolinc_docker/CPC2-beta/bin/:$PATH
+
 
 # Entrypoint
 ENTRYPOINT ["evolinc-part-I.sh"]
