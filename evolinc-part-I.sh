@@ -4,7 +4,7 @@
 
 usage() {
       echo ""
-      echo "Usage : sh $0 -c cuffcompare -g genome -u user_gff -r gff -o output -n threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
+      echo "Usage : sh $0 -c cuffcompare -g genome -u user_gff -o output -n threads [-b TE_RNA] [-t CAGE_RNA] [-x Known_lincRNA]"
       echo ""
 
 cat <<'EOF'
@@ -15,13 +15,13 @@ cat <<'EOF'
 
   -u </path/to/user reference annotation file>
 
-  -r </path/to/reference annotation file>
+  -r </path/to/reference annotation file> # This option is specific to CyVerse Discovery Environment
 
-  -b </path/to/Transposable Elements file>
+  -o </path/to/output file>
 
   -n <number of threads>
 
-  -o </path/to/output file>
+  -b </path/to/Transposable Elements file>
 
   -t </path/to/CAGE RNA file>
   
@@ -102,17 +102,92 @@ sed 's~^>0*~>~g' $referencegenome | sed 's~^>Chr0*~>~g' | sed 's~^>Scaffold0*~>~
 # STEP 1:
 START_TIME_1=$SECONDS
 
-# Extracting classcode u transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts and modify the header to generate genes
-grep '"u"' comparefile.gtf | gffread -w transcripts.u.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa putative_intergenic.genes.fa && sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
-grep '"x"' comparefile.gtf | gffread -w transcripts.x.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
-grep '"s"' comparefile.gtf | gffread -w transcripts.s.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
-grep '"o"' comparefile.gtf | gffread -w transcripts.o.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
-grep '"e"' comparefile.gtf | gffread -w transcripts.e.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
-grep '"i"' comparefile.gtf | gffread -w transcripts.i.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
+# Extracting classcode transcripts, making fasta file, removing transcripts > 200 and selecting protein coding transcripts and modify the header to generate genes
+
+grep '"u"' comparefile.gtf | gffread -w transcripts.u.fa -g referencegenome.fa - 
+if [[ -s transcripts.u.fa ]]; then 
+  #grep '"u"' comparefile.gtf | gffread -w transcripts.u.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa putative_intergenic.genes.fa && sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
+  grep 'class_code "u"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
+  gffread -w transcripts.u.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa putative_intergenic.genes.fa && \
+  sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
+else
+  rm transcripts.u.fa
+fi
+
+grep '"x"' comparefile.gtf | gffread -w transcripts.x.fa -g referencegenome.fa - 
+if [[ -s transcripts.x.fa ]]; then
+  #grep '"x"' comparefile.gtf | gffread -w transcripts.x.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
+  grep 'class_code "x"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
+  gffread -w transcripts.x.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && \
+  sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes
+else
+  rm transcripts.x.fa
+fi
+
+grep '"s"' comparefile.gtf | gffread -w transcripts.s.fa -g referencegenome.fa -
+if [[ -s transcripts.s.fa ]]; then
+  #grep '"s"' comparefile.gtf | gffread -w transcripts.s.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes 
+  grep 'class_code "s"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
+  gffread -w transcripts.s.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && \
+  sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
+else
+  rm transcripts.s.fa
+fi
+
+grep '"o"' comparefile.gtf | gffread -w transcripts.o.fa -g referencegenome.fa -
+if [[ -s transcripts.o.fa ]]; then
+  #grep '"o"' comparefile.gtf | gffread -w transcripts.o.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes 
+  grep 'class_code "o"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
+  gffread -w transcripts.o.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && \
+  sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
+else
+  rm transcripts.o.fa
+fi
+
+grep '"e"' comparefile.gtf | gffread -w transcripts.e.fa -g referencegenome.fa -
+if [[ -s transcripts.e.fa ]]; then
+  #grep '"e"' comparefile.gtf | gffread -w transcripts.e.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes 
+  grep 'class_code "e"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
+  gffread -w transcripts.e.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && \
+  sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
+else
+  rm transcripts.e.fa
+fi
+
+grep '"i"' comparefile.gtf | gffread -w transcripts.i.fa -g referencegenome.fa -
+if [[ -s transcripts.i.fa ]]; then
+  #grep '"i"' comparefile.gtf | gffread -w transcripts.i.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes 
+  grep 'class_code "i"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
+  gffread -w transcripts.i.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && \
+  sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes
+else
+  rm transcripts.i.fa
+fi
+
+# Generating stats
+echo "Generating Number of transcripts"
+echo "##################################"
+for i in transcripts.*.fa
+do
+  num=$(grep ">" -c $i)
+  printf "%10s %s\n" $num $i
+done
+echo "##################################"
+
 rm referencegenome.fa
 
-# Concatenate all the genes id's from filtered files
-cat transcripts.*.filter.fa.genes > transcripts.all.overlapping.filter.genes
+# CPC2 filtering
+
+# Other class codes
+cat transcripts.*.filter.fa > transcripts.all.overlapping.filter.fa
+python /evolinc_docker/CPC2-beta/bin/CPC2.py -i transcripts.all.overlapping.filter.fa -o transcripts.all.overlapping.filter_cpc2.txt
+grep "noncoding" transcripts.all.overlapping.filter_cpc2.txt | cut -f 1 > transcripts.all.overlapping.filter_cpc2.noncoding.genes
+perl -ne 'if(/^>(\S+)/){$c=$i{$1}}$c?print:chomp;$i{$_}=1 if @ARGV' transcripts.all.overlapping.filter_cpc2.noncoding.genes transcripts.all.overlapping.filter.fa > transcripts.all.overlapping.filter_cpc2.noncoding.genes.fa
+
+# Putative intergenic genes
+python /evolinc_docker/CPC2-beta/bin/CPC2.py -i putative_intergenic.genes.fa -o putative_intergenic.genes_cpc2.txt
+grep "noncoding" putative_intergenic.genes_cpc2.txt | cut -f 1 > putative_intergenic.genes_cpc2.noncoding.genes
+perl -ne 'if(/^>(\S+)/){$c=$i{$1}}$c?print:chomp;$i{$_}=1 if @ARGV' putative_intergenic.genes_cpc2.noncoding.genes putative_intergenic.genes.fa > putative_intergenic.genes_cpc2.noncoding.genes.fa
 
 # Make new directory
 mkdir transcripts_u_filter.fa.transdecoder_dir
@@ -120,11 +195,27 @@ mkdir transcripts_u_filter.fa.transdecoder_dir
 # Move the transcript files to this directory transcripts_u_filter.fa.transdecoder_dir
 mv transcripts.* transcripts_u_filter.fa.transdecoder_dir/
 mv putative_intergenic.* transcripts_u_filter.fa.transdecoder_dir/
+
 # Change the directory
 cd transcripts_u_filter.fa.transdecoder_dir
 
-# Run transdecoder now
-for file in *filter.fa; do TransDecoder.LongOrfs -t $file; done
+# Generating stats
+echo "Generating Number of coding and noncoding"
+echo "##################################"
+pc=$(grep "[^non]coding" -c putative_intergenic.genes_cpc2.txt)
+echo "putative_intergenic_coding_transcripts" $pc
+pn=$(grep "noncoding" -c putative_intergenic.genes_cpc2.txt) 
+echo "putative_intergenic_noncoding_transcripts" $pn   
+oc=$(grep "[^non]coding" -c transcripts.all.overlapping.filter_cpc2.txt)
+echo "overlapping_coding_transcripts" $oc
+on=$(grep "noncoding" -c transcripts.all.overlapping.filter_cpc2.txt)
+echo "overlapping_coding_transcripts" $on
+echo "##################################"
+
+# Transdecoder filtering
+
+# Overlapping transcripts
+TransDecoder.LongOrfs -t transcripts.all.overlapping.filter_cpc2.noncoding.genes.fa
 
 # This groups all the longest_orfs.cds and all the longest_orf.pep files into one, in the transdecoder file.
 find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat.cds 
@@ -135,26 +226,22 @@ blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_tar
 
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
-
 cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 | uniq > longest_orfs_cat.pep.blastp.genes
-
 cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest_orfs_cat.cds.pep.blastp.genes
 
 # Remove these protein coding genes from the filter file
-grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts.all.overlapping.filter.genes > transcripts.all.overlapping.filter.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
+grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes transcripts.all.overlapping.filter_cpc2.noncoding.genes > transcripts.all.overlapping.filter.not.genes  
 sed 's/^/>/' transcripts.all.overlapping.filter.not.genes > temp && mv temp transcripts.all.overlapping.filter.not.genes # changed name here 
 
 # Extract fasta file
-cat transcripts.*.filter.fa > transcripts.all.overlapping.filter.fa
 python /evolinc_docker/extract_sequences.py transcripts.all.overlapping.filter.not.genes transcripts.all.overlapping.filter.fa transcripts.all.overlapping.filter.not.genes.fa 
 sed 's/ /./' transcripts.all.overlapping.filter.not.genes.fa > temp && mv temp transcripts.all.overlapping.filter.not.genes.fa
 
-#clean up the folder for the next round of transdecoder
+# Clean up the folder for the next round of transdecoder
 rm longest_orf*
 
-###repeat transdecoder on just the novel transcripts
-
-for file in putative_intergenic.genes.fa; do TransDecoder.LongOrfs -t $file; done
+# Novel transcripts
+TransDecoder.LongOrfs -t putative_intergenic.genes_cpc2.noncoding.genes.fa
 
 # This groups all the longest_orfs.cds and all the longest_orf.pep files into one, in the transdecoder file.
 find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat.cds 
@@ -165,21 +252,18 @@ blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_tar
 
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
-
 cut -f1 longest_orfs_cat.pep.blastp | cut -d '|' -f 1 | uniq > longest_orfs_cat.pep.blastp.genes
-
 cat longest_orfs.cds.genes longest_orfs_cat.pep.blastp.genes | sort -u > longest_orfs_cat.cds.pep.blastp.genes
 
 # Remove these protein coding genes from the filter file
-grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes putative_intergenic.genes > putative_intergenic.genes.not.genes  #I added the -F here, it speeds things up quite a bit as it is searching for exact strings.
+grep -v -F -f longest_orfs_cat.cds.pep.blastp.genes putative_intergenic.genes_cpc2.noncoding.genes > putative_intergenic.genes.not.genes
 sed 's/^/>/' putative_intergenic.genes.not.genes > temp && mv temp putative_intergenic.genes.not.genes # changed name here 
 
 # Extract fasta file
 python /evolinc_docker/extract_sequences.py putative_intergenic.genes.not.genes putative_intergenic.genes.fa putative_intergenic.genes.not.genes.fa 
 sed 's/ /./' putative_intergenic.genes.not.genes.fa > temp && mv temp putative_intergenic.genes.not.genes.fa
 
-
-# Blast the putative intergenic lincRNA fasta file to TE RNA db
+# Blast the putative intergenic lincRNA fasta file to TE RNA db (if provided)
 if [ ! -z $blastfile ]; then
      makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
      blastn -query putative_intergenic.genes.not.genes.fa -db ../$blastfile.blast.out -out putative_intergenic.genes.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
@@ -209,6 +293,7 @@ python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified putative_in
 python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt putative_intergenic.genes.not.genes.fa TE_containing_transcripts.fa
 sed -i 's/_/./g' TE_containing_transcripts.fa
 sed -i 's/gene=//g' TE_containing_transcripts.fa
+
 #Create a bed file of TE-containing INTERGENIC transcripts for user
 cut -f 1 -d "." putative_intergenic.genes.not.genes.fa.blast.out > TE_containing_transcript_list_transcript_ID_only.txt
 grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../comparefile.gtf > TE_containing_transcripts.gtf
