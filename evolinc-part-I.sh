@@ -49,7 +49,7 @@ while getopts ":b:c:g:hr:t:x:o:n:u:" opt; do
      referencegenome=$OPTARG
       ;;
     u)
-     user_referencegff=$OPTARG
+     user_referencegff=$OPTARG # This option is specific to CyVerse Discovery Environment
       ;;
     r)
      referencegff=$OPTARG
@@ -106,7 +106,6 @@ START_TIME_1=$SECONDS
 
 grep '"u"' comparefile.gtf | gffread -w transcripts.u.fa -g referencegenome.fa - 
 if [[ -s transcripts.u.fa ]]; then 
-  #grep '"u"' comparefile.gtf | gffread -w transcripts.u.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa putative_intergenic.genes.fa && sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
   grep 'class_code "u"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
   gffread -w transcripts.u.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.u.fa putative_intergenic.genes.fa && \
   sed 's/ .*//' putative_intergenic.genes.fa | sed -ne 's/>//p' > putative_intergenic.genes
@@ -116,7 +115,6 @@ fi
 
 grep '"x"' comparefile.gtf | gffread -w transcripts.x.fa -g referencegenome.fa - 
 if [[ -s transcripts.x.fa ]]; then
-  #grep '"x"' comparefile.gtf | gffread -w transcripts.x.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes 
   grep 'class_code "x"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
   gffread -w transcripts.x.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.x.fa transcripts.x.filter.fa && \
   sed 's/ .*//' transcripts.x.filter.fa | sed -ne 's/>//p' > transcripts.x.filter.fa.genes
@@ -126,7 +124,6 @@ fi
 
 grep '"s"' comparefile.gtf | gffread -w transcripts.s.fa -g referencegenome.fa -
 if [[ -s transcripts.s.fa ]]; then
-  #grep '"s"' comparefile.gtf | gffread -w transcripts.s.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes 
   grep 'class_code "s"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
   gffread -w transcripts.s.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.s.fa transcripts.s.filter.fa && \
   sed 's/ .*//' transcripts.s.filter.fa | sed -ne 's/>//p' > transcripts.s.filter.fa.genes
@@ -136,7 +133,6 @@ fi
 
 grep '"o"' comparefile.gtf | gffread -w transcripts.o.fa -g referencegenome.fa -
 if [[ -s transcripts.o.fa ]]; then
-  #grep '"o"' comparefile.gtf | gffread -w transcripts.o.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes 
   grep 'class_code "o"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
   gffread -w transcripts.o.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.o.fa transcripts.o.filter.fa && \
   sed 's/ .*//' transcripts.o.filter.fa | sed -ne 's/>//p' > transcripts.o.filter.fa.genes
@@ -146,7 +142,6 @@ fi
 
 grep '"e"' comparefile.gtf | gffread -w transcripts.e.fa -g referencegenome.fa -
 if [[ -s transcripts.e.fa ]]; then
-  #grep '"e"' comparefile.gtf | gffread -w transcripts.e.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes 
   grep 'class_code "e"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
   gffread -w transcripts.e.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.e.fa transcripts.e.filter.fa && \
   sed 's/ .*//' transcripts.e.filter.fa | sed -ne 's/>//p' > transcripts.e.filter.fa.genes
@@ -156,7 +151,6 @@ fi
 
 grep '"i"' comparefile.gtf | gffread -w transcripts.i.fa -g referencegenome.fa -
 if [[ -s transcripts.i.fa ]]; then
-  #grep '"i"' comparefile.gtf | gffread -w transcripts.i.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes 
   grep 'class_code "i"' comparefile.gtf | cut -f 9 | tr ";" "\n" | grep transcript | sed 's/^ //g' | cut -d " " -f 2 | grep -Ff - comparefile.gtf | \
   gffread -w transcripts.i.fa -g referencegenome.fa - && python /evolinc_docker/get_gene_length_filter.py transcripts.i.fa transcripts.i.filter.fa && \
   sed 's/ .*//' transcripts.i.filter.fa | sed -ne 's/>//p' > transcripts.i.filter.fa.genes

@@ -1,4 +1,7 @@
-# EVOLINC-I 1.5
+# EVOLINC-I: A rapid Long-Intergenic Noncoding RNA (lincRNA) detection pipeline
+
+# Introduction
+
 Evolinc-I is a long intergenic noncoding RNA (lincRNA) identification workflow that also facilitates genome browser visualization of identified lincRNAs and downstream differential gene expression analysis. 
 
 Evolinc-I minimally requires the following input data
@@ -6,8 +9,6 @@ Evolinc-I minimally requires the following input data
 1. A set of assembled and merged transcripts from Cuffmerge or Cuffcompare in gene transfer format (GTF)
 2. A reference genome (FASTA)
 3. A reference genome annotation (GFF/GTF/GFF3)
-
-
 
 Optional input data
 
@@ -19,19 +20,32 @@ Optional input data
 # Availablility
 ### Using Docker image
 
-Since there are several dependencies (these can be seen in [Dockerfile](https://hub.docker.com/r/cyverse/evolinc-i/~/dockerfile/)) for running Evolinc-I on your linux or MAC OS, we highly recommend using the available Docker image for [Evolinc-I](https://hub.docker.com/r/cyverse/evolinc-i/) or the [Dockerfile](https://hub.docker.com/r/cyverse/evolinc-i/~/dockerfile/) to build an image and then use the built image.
+Since there are several dependencies (these can be seen in [Dockerfile](https://hub.docker.com/r/cyverse/evolinc-i/~/dockerfile/)) for running Evolinc-I on your linux or MAC OS, we highly recommend using the available Docker image for [Evolinc-I](https://hub.docker.com/r/cyverse/evolinc-i/) or the [Dockerfile](https://hub.docker.com/r/cyverse/evolinc-i/~/dockerfile/) to build an image and then use the built image. Docker can be installed on any of three platform using the instructions from [Docker website](https://docs.docker.com/engine/installation/). You can also try [Play-With-Docker](http://labs.play-with-docker.com/) for running Evolinc-I using the below instructions 
 
 ```
 # Pull the image from CyVerse Dockerhub
-docker pull evolinc/evolinc-i:1.5
+docker pull evolinc/evolinc-i:1.5.1
+```
 
-# See the command line help for the image
-docker run evolinc/evolinc-i:1.5 -h 
+```
+# See the command line help for the Docker image
+docker run evolinc/evolinc-i:1.5.1 -h 
+```
 
-# Run Evolinc-I on the test data. The sample data can be found in the sample_data folder in this repo
+```
+# Download some sample data 
 git clone https://github.com/Evolinc/Evolinc-I.git
 cd Evolinc-I
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.5 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
+```
+
+```
+# Run Evolinc-I With mandatory files
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.5.1 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -o test_out -n 4
+```
+
+```
+# Run Evolinc-I With both mandatory and optional files
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.5.1 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -r TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
 ```
 
 ### Using CyVerse Discovery Environment
