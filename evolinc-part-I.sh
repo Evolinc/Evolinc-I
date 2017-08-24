@@ -180,12 +180,12 @@ rm referencegenome.fa
 
 # Other class codes
 cat transcripts.*.filter.fa > transcripts.all.overlapping.filter.fa
-python /evolinc_docker/CPC2-beta/bin/CPC2.py -i transcripts.all.overlapping.filter.fa -o transcripts.all.overlapping.filter_cpc2.txt
+python /evolinc_docker/CPC2-beta/bin/CPC2.py -r -i transcripts.all.overlapping.filter.fa -o transcripts.all.overlapping.filter_cpc2.txt
 grep "noncoding" transcripts.all.overlapping.filter_cpc2.txt | cut -f 1 > transcripts.all.overlapping.filter_cpc2.noncoding.genes
 perl -ne 'if(/^>(\S+)/){$c=$i{$1}}$c?print:chomp;$i{$_}=1 if @ARGV' transcripts.all.overlapping.filter_cpc2.noncoding.genes transcripts.all.overlapping.filter.fa > transcripts.all.overlapping.filter_cpc2.noncoding.genes.fa
 
 # Putative intergenic genes
-python /evolinc_docker/CPC2-beta/bin/CPC2.py -i putative_intergenic.genes.fa -o putative_intergenic.genes_cpc2.txt
+python /evolinc_docker/CPC2-beta/bin/CPC2.py -r -i putative_intergenic.genes.fa -o putative_intergenic.genes_cpc2.txt
 grep "noncoding" putative_intergenic.genes_cpc2.txt | cut -f 1 > putative_intergenic.genes_cpc2.noncoding.genes
 perl -ne 'if(/^>(\S+)/){$c=$i{$1}}$c?print:chomp;$i{$_}=1 if @ARGV' putative_intergenic.genes_cpc2.noncoding.genes putative_intergenic.genes.fa > putative_intergenic.genes_cpc2.noncoding.genes.fa
 
