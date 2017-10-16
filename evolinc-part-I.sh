@@ -216,7 +216,7 @@ find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat
 find . -type f -name longest_orfs.pep -exec cat '{}' \; | cat > longest_orfs_cat.pep 
 
 # Blasting the transcripts to uniprot db
-blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads $threads > longest_orfs_cat.pep.blastp
+diamond blastp -d /evolinc_docker/uniprot_sprot -q longest_orfs_cat.pep -o longest_orfs_cat.pep.blastp -p $threads -k 1 --outfmt 6 -e 1e-5 
 
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
@@ -242,7 +242,7 @@ find . -type f -name longest_orfs.cds -exec cat '{}' \; | cat > longest_orfs_cat
 find . -type f -name longest_orfs.pep -exec cat '{}' \; | cat > longest_orfs_cat.pep 
 
 # Blasting the transcripts to uniprot db
-blastp -query longest_orfs_cat.pep -db /evolinc_docker/uniprot_sprot.fa -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads $threads > longest_orfs_cat.pep.blastp
+diamond blastp -d /evolinc_docker/uniprot_sprot -q longest_orfs_cat.pep -o longest_orfs_cat.pep.blastp -p $threads -k 1 --outfmt 6 -e 1e-5 
 
 # Genes in the protein coding genes
 sed 's/|.*//' longest_orfs_cat.cds | sed -ne 's/>//p' | uniq > longest_orfs.cds.genes
@@ -332,7 +332,7 @@ grep -Ff SOT.lincRNA.ids.txt lincRNA.prefilter.bed > SOT.lincRNA.all.bed
 cut -f 10 SOT.lincRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.lincRNA.all.txt
 
 # Move SOT to a new file
-grep -A 1 -f SOT.lincRNA.all.txt lincRNA.genes.fa > SOT.lincRNA.fa
+grep -A 1 -Ff SOT.lincRNA.all.txt lincRNA.genes.fa > SOT.lincRNA.fa
 #Clean up FASTA file
 sed -i 's~--~~g' SOT.lincRNA.fa # still has an extra new line
 
@@ -364,7 +364,7 @@ cut -f 10 AOT.lincRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/)
 grep -vFf AOT.lincRNA.ids.txt lincRNA.noSOT.bed > lincRNA.postfilter.bed
 
 # Move NATs to a new file
-grep -A 1 -f AOT.lincRNA.all.txt lincRNA.genes.fa > AOT.lincRNA.fa
+grep -A 1 -Ff AOT.lincRNA.all.txt lincRNA.genes.fa > AOT.lincRNA.fa
 #Clean up FASTA file
 sed -i 's~--~~g' AOT.lincRNA.fa # still has an extra new line
 
@@ -400,7 +400,7 @@ grep -Ff SOT.lncRNA.ids.txt lncRNA.prefilter.bed > SOT.lncRNA.all.bed
 cut -f 10 SOT.lncRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) {print $i}}}'| sort | uniq | sed 's~;~~g' |sed 's~"~~g' | sed 's~zero_length_insertion=True~~g' |sed 's/^/>/' > SOT.lncRNA.all.txt
 
 # Move SOT to a new file
-grep -A 1 -f SOT.lncRNA.all.txt transcripts.all.overlapping.filter.not.genes.fa > SOT.lncRNA.fa
+grep -A 1 -Ff SOT.lncRNA.all.txt transcripts.all.overlapping.filter.not.genes.fa > SOT.lncRNA.fa
 #Clean up FASTA file
 sed -i 's~--~~g' SOT.lncRNA.fa # still has an extra new line
 
@@ -425,7 +425,7 @@ cut -f 10 AOT.lncRNA.all.bed | awk -F " " '{for(i=1;i<=NF;i++){if ($i ~/TCONS/) 
 grep -vFf AOT.lncRNA.ids.txt lncRNA.noSOT.bed > lncRNA.postfilter.bed
 
 # Move NATs to a new file
-grep -A 1 -f AOT.lncRNA.all.txt transcripts.all.overlapping.filter.not.genes.fa > AOT.lncRNA.fa
+grep -A 1 -Ff AOT.lncRNA.all.txt transcripts.all.overlapping.filter.not.genes.fa > AOT.lncRNA.fa
 #Clean up FASTA file
 sed -i 's~--~~g' AOT.lncRNA.fa # still has an extra new line
 ###End of Step 2-4 repeat

@@ -23,8 +23,8 @@ RUN wget -O- http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cuffl
 RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz | tar xzvf -
 
 # NCBI Blast
-RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-x64-linux.tar.gz > ncbi-blast-2.4.0+-x64-linux.tar.gz
-RUN tar xvf ncbi-blast-2.4.0+-x64-linux.tar.gz
+RUN wget http://github.com/bbuchfink/diamond/releases/download/v0.9.10/diamond-linux64.tar.gz
+RUN tar xzf diamond-linux64.tar.gz
 
 # Samtools
 RUN wget --no-check-certificate http://sourceforge.net/projects/samtools/files/samtools/1.0/samtools-bcftools-htslib-1.0_x64-linux.tar.bz2/download
@@ -54,24 +54,25 @@ RUN Rscript -e 'source("https://bioconductor.org/biocLite.R"); biocLite("Biostri
 RUN Rscript -e 'install.packages("getopt", dependencies = TRUE, repos="http://cran.rstudio.com/");'
 
 # Uniprot database
-ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.tar.gz /evolinc_docker/
-RUN tar zxvf /evolinc_docker/uniprot_sprot.tar.gz && rm /evolinc_docker/uniprot_sprot.tar.gz
+ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.dmnd.gz /evolinc_docker/
+RUN gzip -d /evolinc_docker/uniprot_sprot.dmnd.gz
 
 # Biopython
 RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 RUN python get-pip.py
 RUN pip install biopython
 
-# CPC2
-WORKDIR /evolinc_docker
-RUN wget http://cpc2.cbi.pku.edu.cn/data/CPC2-beta.tar.gz
-RUN gzip -dc CPC2-beta.tar.gz | tar xf -
-WORKDIR CPC2-beta/libs/libsvm
-RUN gzip -dc libsvm-3.22.tar.gz | tar xf -
+# CPC2 (modified)
+ADD CPC2-beta /evolinc_docker/CPC2-beta
+WORKDIR /evolinc_docker/CPC2-beta/libs/libsvm/
+RUN tar xvf libsvm-3.22.tar.gz
 WORKDIR libsvm-3.22
 RUN make clean && make
-RUN rm /evolinc_docker/CPC2-beta.tar.gz
 WORKDIR /
+
+# NCBI Blast
+RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-x64-linux.tar.gz > ncbi-blast-2.4.0+-x64-linux.tar.gz
+RUN tar xvf ncbi-blast-2.4.0+-x64-linux.tar.gz
 
 # Evolinc wrapper scripts
 ADD *.sh *.py *.R /evolinc_docker/
@@ -86,7 +87,8 @@ ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/samtools-bcftools-htslib-1.0_x64-linux/bin/:$PATH
 ENV PATH /evolinc_docker/bin/:$PATH
 ENV PATH /evolinc_docker/CPC2-beta/bin/:$PATH
-
+ENV PATH /evolinc_docker/ncbi-blast-2.4.0+/bin/:$PATH
+ENV PATH /evolinc_docker/:$PATH
 
 # Entrypoint
 ENTRYPOINT ["evolinc-part-I.sh"]
