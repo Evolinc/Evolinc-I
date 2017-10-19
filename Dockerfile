@@ -22,7 +22,7 @@ RUN wget -O- http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cuffl
 # Transdecoder
 RUN wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz | tar xzvf -
 
-# NCBI Blast
+# Diamond Blast
 RUN wget http://github.com/bbuchfink/diamond/releases/download/v0.9.10/diamond-linux64.tar.gz
 RUN tar xzf diamond-linux64.tar.gz
 
