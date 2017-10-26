@@ -40,12 +40,12 @@ cd Evolinc-I
 
 ```
 # Run Evolinc-I With mandatory files
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.5.1 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.6 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -o test_out -n 4
 ```
 
 ```
 # Run Evolinc-I With both mandatory and optional files
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.5.1 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.6 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
 ```
 
 ### Using CyVerse Discovery Environment
