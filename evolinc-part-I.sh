@@ -257,41 +257,76 @@ sed 's/^/>/' putative_intergenic.genes.not.genes > temp && mv temp putative_inte
 python /evolinc_docker/extract_sequences.py putative_intergenic.genes.not.genes putative_intergenic.genes.fa putative_intergenic.genes.not.genes.fa 
 sed 's/ /./' putative_intergenic.genes.not.genes.fa > temp && mv temp putative_intergenic.genes.not.genes.fa
 
+###RFAM MODULE###
+#Blast the putative to rfam database
+echo "starting rFAM search"
+#Obligatory BLAST against RFAM reference DB#
+lastdb -s 1G rfam.blast.out ../rfam_data.fasta
+lastal -E10 -P 0 -f BlastTab+ rfam.blast.out putative_intergenic.genes.not.genes.fa > putative_intergenic.genes.not.genes.fa.rfam.blast.out
+
+# Remove LAST-specific nomenclature from output#
+grep -v "#" putative_intergenic.genes.not.genes.fa.rfam.blast.out >putative_intergenic.genes.not.genes.fa.rfam.blast.out.clean
+
+# Filter the output to select the best transcript based on e-value and bit-score
+python /evolinc_docker/filter_sequences.py putative_intergenic.genes.not.genes.fa.rfam.blast.out.clean putative_intergenic.genes.not.genes.fa.rfam.blast.out.filtered
+
+# Modify the header in the fasta file to extract header only; grab all headers
+grep ">"  putative_intergenic.genes.not.genes.fa | sed 's/>//' > putative_intergenic.genes.not.genes_only
+
+# Now remove the blast hits from the fasta file
+python /evolinc_docker/fasta_remove.py putative_intergenic.genes.not.genes.fa.rfam.blast.out.filtered putative_intergenic.genes.not.genes_only putative_intergenic.genes.not.genes_no_rfam_list
+
+#The below line of code was for testing purposes, can be uncommented if issues arise
+#mv putative_intergenic.genes.not.genes.fa.rfam.blast.out ../$output/rfam_for_checking.txt
+
+#Modify the RFAM-containing transcript list to include ">"
+sed 's/^/>/' putative_intergenic.genes.not.genes_no_rfam_list > putative_intergenic.genes.not.genes_no_rfam_list.modified
+
+# Extract the non-RFAM sequences
+python /evolinc_docker/extract_sequences-1.py putative_intergenic.genes.not.genes_no_rfam_list.modified putative_intergenic.genes.not.genes.fa lincRNA.genes_no_rfam.fa
+###END of RFAM MODULE###
+
+###TE MODULE###
 # Blast the putative intergenic lincRNA fasta file to TE RNA db (if provided)
 if [ ! -z $blastfile ]; then
-     makeblastdb -in ../$blastfile -dbtype nucl -out ../$blastfile.blast.out &&
-     blastn -query putative_intergenic.genes.not.genes.fa -db ../$blastfile.blast.out -out putative_intergenic.genes.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
+     echo "starting TE search"
+	 lastdb -s 1G ../$blastfile ../$blastfile.blast.out &&
+     lastal -E10 -P 0 -f BlastTab+ ../$blastfile.blast.out lincRNA.genes_no_rfam.fa > lincRNA.genes_no_rfam.fa.TEblast.out.temp
+	 grep -v "#" lincRNA.genes_no_rfam.fa.TEblast.out.temp putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out
+     #blastn -query putative_intergenic.genes.not.genes.fa -db ../$blastfile.blast.out -out putative_intergenic.genes.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
 else
-    touch putative_intergenic.genes.not.genes.fa.blast.out
+    touch putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out
+	echo "No TEs provided for searching"
 fi
 
 # Filter the output to select the best transcript based on e-value and bit-score
 python /evolinc_docker/filter_sequences.py putative_intergenic.genes.not.genes.fa.blast.out putative_intergenic.genes.not.genes.fa.blast.out.filtered
 
 # Modify the header in the fasta file to extract header only
-grep ">" putative_intergenic.genes.not.genes.fa | sed 's/>//' > putative_intergenic.genes.not.genes_only
+grep ">" lincRNA.genes_no_rfam.fa | sed 's/>//' > lincRNA.genes_no_rfam.fa_headers_only
 
 # Now remove the blast hits from the fasta file
-python /evolinc_docker/fasta_remove.py putative_intergenic.genes.not.genes.fa.blast.out.filtered putative_intergenic.genes.not.genes_only lincRNA.genes
+python /evolinc_docker/fasta_remove.py putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out.filtered lincRNA.genes_no_rfam.fa_headers_only lincRNA.genes
 
 # Modify the fasta header to include ">", generating a new file so as to keep the lincRNA.genes file intact for later use.
 sed 's/^/>/' lincRNA.genes > lincRNA.genes.modified
 
 #Modify the TE-containing transcript list to include ">"
-sed 's/^/>/' putative_intergenic.genes.not.genes.fa.blast.out > List_of_TE_containing_transcripts.txt
+sed 's/^/>/' putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out.filtered > List_of_TE_containing_transcripts.txt
 
 # Extract the sequences
-python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified putative_intergenic.genes.not.genes.fa lincRNA.genes.fa
+python /evolinc_docker/extract_sequences-1.py lincRNA.genes.modified lincRNA.genes_no_rfam.fa lincRNA.genes.fa
 
 #Extract TE-containing sequences for user
-python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt putative_intergenic.genes.not.genes.fa TE_containing_transcripts.fa
+python /evolinc_docker/extract_sequences-1.py List_of_TE_containing_transcripts.txt lincRNA.genes_no_rfam.fa TE_containing_transcripts.fa
 sed -i 's/_/./g' TE_containing_transcripts.fa
 sed -i 's/gene=//g' TE_containing_transcripts.fa
 
 #Create a bed file of TE-containing INTERGENIC transcripts for user
-cut -f 1 -d "." putative_intergenic.genes.not.genes.fa.blast.out > TE_containing_transcript_list_transcript_ID_only.txt
+cut -f 1 -d "." putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out > TE_containing_transcript_list_transcript_ID_only.txt
 grep -F -f TE_containing_transcript_list_transcript_ID_only.txt ../comparefile.gtf > TE_containing_transcripts.gtf
 gff2bed < TE_containing_transcripts.gtf > TE_containing_transcripts.bed
+###END OF TE MODULE###
 
 ELAPSED_TIME_1=$(($SECONDS - $START_TIME_1))
 echo "Elapsed time for step 1 is" $ELAPSED_TIME_1 "seconds" > ../$output/elapsed_time-evolinc-i.txt
