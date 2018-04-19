@@ -57,6 +57,9 @@ RUN Rscript -e 'install.packages("getopt", dependencies = TRUE, repos="http://cr
 ADD https://github.com/iPlantCollaborativeOpenSource/docker-builds/releases/download/evolinc-I/uniprot_sprot.dmnd.gz /evolinc_docker/
 RUN gzip -d /evolinc_docker/uniprot_sprot.dmnd.gz
 
+# rFAM database
+ADD https://de.cyverse.org/dl/d/12EF1A2F-B9FC-456D-8CD9-9F87197CACF2/rFAM_sequences.fasta /evolinc_docker/
+
 # Biopython
 RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 RUN python get-pip.py
