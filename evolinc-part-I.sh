@@ -261,7 +261,7 @@ sed 's/ /./' putative_intergenic.genes.not.genes.fa > temp && mv temp putative_i
 #Blast the putative to rfam database
 echo "starting rFAM search"
 #Obligatory BLAST against RFAM reference DB#
-lastdb -s 1G rfam.blast.out ../rfam_data.fasta
+lastdb -s 1G rfam.blast.out /evolinc_docker/rFAM_sequences.fasta
 lastal -E10 -P 0 -f BlastTab+ rfam.blast.out putative_intergenic.genes.not.genes.fa > putative_intergenic.genes.not.genes.fa.rfam.blast.out
 
 # Remove LAST-specific nomenclature from output#
