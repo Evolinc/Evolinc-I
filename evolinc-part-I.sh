@@ -300,7 +300,7 @@ else
 fi
 
 # Filter the output to select the best transcript based on e-value and bit-score
-python /evolinc_docker/filter_sequences.py putative_intergenic.genes.not.genes.fa.blast.out putative_intergenic.genes.not.genes.fa.blast.out.filtered
+python /evolinc_docker/filter_sequences.py putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out.filtered
 
 # Modify the header in the fasta file to extract header only
 grep ">" lincRNA.genes_no_rfam.fa | sed 's/>//' > lincRNA.genes_no_rfam.fa_headers_only
