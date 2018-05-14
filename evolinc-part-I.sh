@@ -290,7 +290,7 @@ python /evolinc_docker/extract_sequences-1.py putative_intergenic.genes.not.gene
 # Blast the putative intergenic lincRNA fasta file to TE RNA db (if provided)
 if [ ! -z $blastfile ]; then
      echo "starting TE search"
-	 lastdb -s 1G ../$blastfile ../$blastfile.blast.out &&
+	 lastdb -s 1G ../$blastfile.blast.out ../$blastfile &&
      lastal -E10 -P 0 -f BlastTab+ ../$blastfile.blast.out lincRNA.genes_no_rfam.fa > lincRNA.genes_no_rfam.fa.TEblast.out.temp
 	 grep -v "#" lincRNA.genes_no_rfam.fa.TEblast.out.temp putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out
      #blastn -query putative_intergenic.genes.not.genes.fa -db ../$blastfile.blast.out -out putative_intergenic.genes.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
