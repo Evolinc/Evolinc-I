@@ -292,7 +292,7 @@ if [ ! -z $blastfile ]; then
      echo "starting TE search"
 	 lastdb -s 1G ../$blastfile.blast.out ../$blastfile &&
      lastal -E10 -P 0 -f BlastTab+ ../$blastfile.blast.out lincRNA.genes_no_rfam.fa > lincRNA.genes_no_rfam.fa.TEblast.out.temp
-	 grep -v "#" lincRNA.genes_no_rfam.fa.TEblast.out.temp putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out
+	 grep -v "#" lincRNA.genes_no_rfam.fa.TEblast.out.temp > putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out
      #blastn -query putative_intergenic.genes.not.genes.fa -db ../$blastfile.blast.out -out putative_intergenic.genes.not.genes.fa.blast.out -outfmt 6 -num_threads $threads # no blast hits here
 else
     touch putative_intergenic.genes.not.genes_no_rfam.fa.TEblast.out
