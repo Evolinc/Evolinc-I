@@ -1,3 +1,9 @@
+[![Docker Pulls](https://img.shields.io/docker/pulls/evolinc/evolinc-i.svg)](https://hub.docker.com/r/evolinc/evolinc-i/)
+[![Docker Stars](https://img.shields.io/docker/stars/evolinc/evolinc-i.svg)](https://hub.docker.com/r/evolinc/evolinc-i/)
+[![Docker Build Status](https://img.shields.io/docker/build/evolinc/evolinc-i.svg)](https://hub.docker.com/r/evolinc/evolinc-i/)
+[![Docker Automated build](https://img.shields.io/docker/automated/evolinc/evolinc-i.svg)](https://hub.docker.com/r/evolinc/evolinc-i/)
+[![Release](https://shields.beevelop.com/github/release/Evolinc/Evolinc-I.svg?style=flat-square)](https://github.com/Evolinc/Evolinc-I/releases)
+
 # EVOLINC-I: A rapid Long-Intergenic Noncoding RNA (lincRNA) detection pipeline
 
 # Introduction
