@@ -30,12 +30,12 @@ Since there are several dependencies (these can be seen in [Dockerfile](https://
 
 ```
 # Pull the image from CyVerse Dockerhub
-docker pull evolinc/evolinc-i:1.7.3
+docker pull evolinc/evolinc-i:1.7.4
 ```
 
 ```
 # See the command line help for the Docker image
-docker run evolinc/evolinc-i:1.7.3 -h 
+docker run evolinc/evolinc-i:1.7.4 -h 
 ```
 
 ```
@@ -46,17 +46,17 @@ cd Evolinc-I/sample_data
 
 ```
 # Run Evolinc-I With mandatory files
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.3 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.4 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -o test_out -n 4
 ```
 
 ```
 # Run Evolinc-I With both mandatory and optional files
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.3 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.4 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
 ```
 
 ### Using CyVerse Discovery Environment
 
-The [Evolinc-I app](https://de.cyverse.org/de/?type=apps&app-id=c30945c6-b7ae-11e7-b32b-008cfa5ae621&system-id=de) is currently integrated in CyVerse’s Discovery Environment (DE) and is free to use by researchers. The complete tutorial is available at this [CyVerse wiki](https://wiki.cyverse.org/wiki/display/TUT/Evolinc+in+the+Discovery+Environment). CyVerse's DE is a free and easy to use GUI that simplifies many aspects of running bioinformatics analyses. If you do not currently have access to a high performance computing cluster, consider taking advantange of the DE.
+The Evolinc-I app (search Evolinc-I in the search box of the apps window) is currently integrated in CyVerse’s Discovery Environment (DE) and is free to use by researchers. The complete tutorial is available at this [CyVerse wiki](https://wiki.cyverse.org/wiki/display/TUT/Evolinc+in+the+Discovery+Environment). CyVerse's DE is a free and easy to use GUI that simplifies many aspects of running bioinformatics analyses. If you do not currently have access to a high performance computing cluster, consider taking advantange of the DE.
 
 #### Step-by-step walkthroughs
 
