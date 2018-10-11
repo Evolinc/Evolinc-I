@@ -6,6 +6,7 @@ library(splitstackshape)
 library(dplyr)
 library(getopt)
 library(splitstackshape)
+library(data.table)
 
 args<-commandArgs(TRUE)
 
@@ -419,7 +420,7 @@ if (nrow(new) == 0) {
     merge2 <- merge(x = merge1, y = bedfinal, by = 1, all = TRUE)
     merge2$V1_2 <- as.character(merge2$V1_2)
     merge2$V1_2[is.na(merge2$V1_2)] <- "No"
-    merge2$V1_2 <- sub("AGE_PLUS", "Yes", merge2$V1_2)
+    merge2$V1_2 <- sub("CAGE_PLUS", "Yes", merge2$V1_2)
     merge2$V1_2 <- as.factor(merge2$V1_2)
     colnames(merge2)[2] <- "Size(bp)"
     colnames(merge2)[3] <- "Has_TSS_data"
