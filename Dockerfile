@@ -73,10 +73,6 @@ WORKDIR libsvm-3.22
 RUN make clean && make
 WORKDIR /
 
-# NCBI Blast
-#RUN curl ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-x64-linux.tar.gz > ncbi-blast-2.4.0+-x64-linux.tar.gz
-#RUN tar xvf ncbi-blast-2.4.0+-x64-linux.tar.gz
-
 #LAST
 RUN wget http://last.cbrc.jp/last-926.zip
 RUN apt-get install -y unzip
@@ -98,7 +94,6 @@ ENV PATH /evolinc_docker/bedtools2-2.25.0/bin/:$PATH
 ENV PATH /evolinc_docker/samtools-bcftools-htslib-1.0_x64-linux/bin/:$PATH
 ENV PATH /evolinc_docker/bin/:$PATH
 ENV PATH /evolinc_docker/CPC2-beta/bin/:$PATH
-#ENV PATH /evolinc_docker/ncbi-blast-2.4.0+/bin/:$PATH
 ENV PATH /last-926/src/:$PATH
 ENV PATH /evolinc_docker/:$PATH
 

@@ -82,6 +82,9 @@ echo `date`
 
 START_TIME=$SECONDS
 
+# Get the prefix of Cuffcompare sample file
+cuff=$(basename $comparefile ".combined.gtf") 
+
 # Throw an error if the genomes are coming from NCBI that adds "|" in the headers
 if ( grep -q ".*|" $referencegenome ); then
    echo "Your genome file header have pipe characters. Please remove/replace them before proceeding" 1>&2
@@ -632,9 +635,26 @@ sed -i 's/_/./g' Other_lncRNA/AOT.fa
 sed -i 's/gene=//g' Other_lncRNA/AOT.fa
 sed -i 's/_/./g' Other_lncRNA/SOT.fa
 sed -i 's/gene=//g' Other_lncRNA/SOT.fa
-echo "All necessary files written to" $output
-echo "Finished Evolinc-part-I!"
-echo `date`
+
+# Append the output file with the Cuffcompare sample prefix
+lincRNAfa="$cuff".lincRNAs.fa
+mv lincRNAs.fa "$lincRNAfa"
+lincRNAbed="$cuff".lincRNAs.bed
+mv lincRNAs.bed "$lincRNAbed"
+lincRNAgtf="$cuff".lincRNA.updated.gtf
+mv lincRNA.updated.gtf "$lincRNAgtf"
+lincRNAdemographics="$cuff".lincRNA_demographics.txt
+mv lincRNA_demographics.txt "$lincRNAdemographics"
+otherlincs="$cuff".other_lncRNA
+mv Other_lncRNA "$otherlincs"
+finalsum="$cuff".final_Summary_table.tsv
+mv final_Summary_table.tsv $finalsum
 
 ELAPSED_TIME=$(($SECONDS - $START_TIME))
 echo "Total elapsed time is" $ELAPSED_TIME "seconds" >> ../$output/elapsed_time-evolinc-i.txt
+elapsed_time="$cuff".elapsed_time-evolinc-i.txt
+mv elapsed_time-evolinc-i.txt "$elapsed_time"
+
+echo "All necessary files written to" $output
+echo "Finished Evolinc-part-I!"
+echo `date`
