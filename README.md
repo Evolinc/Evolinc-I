@@ -30,12 +30,12 @@ Since there are several dependencies (these can be seen in [Dockerfile](https://
 
 ```
 # Pull the image from CyVerse Dockerhub
-docker pull evolinc/evolinc-i:1.7.4
+docker pull evolinc/evolinc-i:1.7.5
 ```
 
 ```
 # See the command line help for the Docker image
-docker run evolinc/evolinc-i:1.7.4 -h 
+docker run evolinc/evolinc-i:1.7.5 -h 
 ```
 
 ```
@@ -46,12 +46,12 @@ cd Evolinc-I/sample_data
 
 ```
 # Run Evolinc-I With mandatory files
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.4 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.5 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -o test_out -n 4
 ```
 
 ```
 # Run Evolinc-I With both mandatory and optional files
-docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.4 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
+docker run --rm -v $(pwd):/working-dir -w /working-dir evolinc/evolinc-i:1.7.5 -c Sample_cuffcompare_out.gtf -g TAIR10_chr1.fasta -u TAIR10_chr1_genes.gff -b TE_RNA_transcripts.fa -t Sample_TSS_data.gff -x Sample_known_lncRNAs.gff -o test_out -n 4
 ```
 
 ### Using CyVerse Discovery Environment
