@@ -625,7 +625,8 @@ echo "Elapsed time for Optional Step(s) is" $ELAPSED_TIME_O1 "seconds" >> ../$ou
 
 # # remove all the other files
 rm -r ../transcripts_u_filter.fa.transdecoder_dir
-rm ../*.fa*.*
+#rm ../*.fa*.*
+rm ../referencegenome.fa.fai
 
 ### Clean up fasta headers
 cd ../$output
